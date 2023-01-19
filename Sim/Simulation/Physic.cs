@@ -13,7 +13,7 @@ namespace Sim.Simulation
     {
         public string Path;
 
-        public int GravityVectorAngle = 90;
+        public int GravityVectorAngle = 270;
 
         public double DeltaTime = 0.01d;
         public int Smoothness = 15;
