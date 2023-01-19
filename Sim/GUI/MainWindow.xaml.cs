@@ -358,7 +358,7 @@ namespace Sim.GUI
             {
 
                 ClearMap();
-                Map = MapFactory.LoadMapFromFile(filePath, Map.Physics);
+                Map = MapBase.Load(filePath, Map.Physics);
                 LoadMap();
                 Logger.Log("New map opened");
             }
