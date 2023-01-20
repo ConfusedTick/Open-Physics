@@ -85,7 +85,7 @@ namespace Sim.GUI
         // Indicates stack panel image border in GenerateStackPanel function
         private const double ImageBorderThickness = -0.5d;
         // Indicates visual info label update interval between ticks
-        private const int WatchingUpdaterInterval = 750;
+        private const int WatchingUpdaterInterval = 500;
 
         private const string WindowTitle = "Open Physics - Demo 1P";
 
@@ -341,14 +341,14 @@ namespace Sim.GUI
             OpenFileDialog dialog = new OpenFileDialog
             {
                 InitialDirectory = System.Reflection.Assembly.GetExecutingAssembly().Location,
-                Filter = "opm files (*.opm)|*.opm|All files (*.*)|*.*",
+                Filter = "opm files (*.opm)|*.opm",
                 FilterIndex = 1,
                 RestoreDirectory = true,
 
                 Title = "Load map"
             };
 
-            if (dialog.ShowDialog() != false)
+            if (dialog.ShowDialog() == false)
             {
                 return;
             }
@@ -369,7 +369,7 @@ namespace Sim.GUI
             SaveFileDialog dialog = new SaveFileDialog
             {
                 InitialDirectory = System.Reflection.Assembly.GetExecutingAssembly().Location,
-                Filter = "opm files (*.opm)|*.opm|All files (*.*)|*.*",
+                Filter = "opm files (*.opm)|*.opm",
                 FilterIndex = 1,
                 RestoreDirectory = true,
 

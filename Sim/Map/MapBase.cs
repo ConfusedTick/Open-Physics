@@ -217,9 +217,10 @@ namespace Sim.Map
             {
 
                 particle.Tick();
+                /**
                 List<ParticleBase> touching = Particles.FindAll(part => part.Position == particle.Position && (part != particle));
-                
                 touching.ForEach(touchingParticle => particle.CollideWith(touchingParticle));
+                **/
                 if (particle.RequireRandomTick) if (Random.Next(0, particle.RandomTickRarity) == 1) particle.RandomTick();
             }
             TickId++;

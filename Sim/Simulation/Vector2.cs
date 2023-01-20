@@ -145,7 +145,6 @@ namespace Sim.Simulation
         public void AddForceToDirection(int angle, double force)
         {
             int betweenAngle = (int)Trigonometrics.Correct((int)(180d - (double)(Angle + angle)));
-            //Logger.Log(betweenAngle + "/" + Angle + "/" + angle + "/F" + force);
             double F = Math.Sqrt((NetForce * NetForce) + (force * force) - (2 * NetForce * force * Trigonometrics.DCos(betweenAngle)));
             int A = Angle + (int)Trigonometrics.RadToDeg(Math.Atan((double)((double)(force * (double)Trigonometrics.DSin(betweenAngle)) / (double)(NetForce + (double)(force * (double)Trigonometrics.DCos(betweenAngle))))));
             SetAngle(A);
@@ -329,8 +328,7 @@ namespace Sim.Simulation
 
         public void Initialize()
         {
-            PermanentForces.Add(new Force(Particle.Map.Physics.GravityVectorAngle, Weight, this));
-            //AddForceToDirection(Particle.Map.Physics.GravityVectorAngle, -Weight);
+            if (PermanentForces.Count == 0) PermanentForces.Add(new Force(Particle.Map.Physics.GravityVectorAngle, Weight, this));
         }
 
         // Compensate forces is only stopping Forces, its not stopping the whole object completely
@@ -356,6 +354,11 @@ namespace Sim.Simulation
 
         public void CollideWith(Vector2 vector)
         {
+            int angle1 = (int)Trigonometrics.RadToDeg(Math.Atan2(vector.Y - Y, vector.X - X) * (180 / Math.PI));
+            int angle2 = 360 - angle1;
+
+
+
             return;
         }
 

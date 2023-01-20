@@ -395,6 +395,7 @@ namespace Sim.Particles
                 return;
             }
 
+            // Melting
             if (temp > MeltingPoint && CurrentState == AggregationStates.Solid)
             {
                 double heatChange = (double)((double)((double)temp - MeltingPoint) * HeatCapacity);
@@ -408,6 +409,8 @@ namespace Sim.Particles
                     ChangeTemperatureByHeatFlux(tchange);
                 }
             }
+
+            // Evaporation
             if (temp > EvaporationPoint && CurrentState == AggregationStates.Liquid)
             {
                 double heatChange = (double)((double)((double)temp - EvaporationPoint) * HeatCapacity);
@@ -422,12 +425,13 @@ namespace Sim.Particles
                 }
             }
 
+            // Condensation
             if (temp < EvaporationPoint && CurrentState == AggregationStates.Gas)
             {
                 double heatChange = (double)((double)((double)temp - EvaporationPoint) * HeatCapacity);
                 HeatBuffer += heatChange;
                 Temperature = EvaporationPoint;
-                double tchange = (double)(HeatBuffer - EvaporationHeat);
+                double tchange = (double)(HeatBuffer + EvaporationHeat);
                 if (tchange < 0)
                 {
                     ChangeAggregationState(AggregationStates.Liquid);
@@ -435,12 +439,14 @@ namespace Sim.Particles
                     ChangeTemperatureByHeatFlux(tchange);
                 }
             }
+
+            // Crystalization
             if (temp < MeltingPoint && CurrentState == AggregationStates.Liquid)
             {
                 double heatChange = (double)((double)((double)temp - MeltingPoint) * HeatCapacity);
                 HeatBuffer += heatChange;
                 Temperature = MeltingPoint;
-                double tchange = (double)(HeatBuffer - MeltingHeat);
+                double tchange = (double)(HeatBuffer + MeltingHeat);
                 if (tchange < 0)
                 {
                     ChangeAggregationState(AggregationStates.Solid);
@@ -493,13 +499,6 @@ namespace Sim.Particles
         /// </summary>
         public virtual void Tick()
         {
-            /**
-             * 
-             * TODO: 
-             * 
-             * **/
-
-
             UpdateOnNextTick = HeatRenderTick() | (PreviousState != CurrentState);
             if (Map.Physics.EnablePositionTick) UpdateOnNextTick |= Position.Tick();
             if (UpdateOnNextTick)
@@ -549,6 +548,7 @@ namespace Sim.Particles
             double heatFlux;
             foreach (ParticleBase affect in affected.Keys)
             {
+                if (affected[affect] <= Size.Width) CollideWith(affect);
                 if (affect.AcceptanceCoeff <= 0) continue;
                 transitionCoeff = (double)(1 / (double)(Math.PI * (double)(affected[affect] * affected[affect]) * halfLenght));
                 heatFlux = (double)((double)EmittingCoeff * (double)affect.AcceptanceCoeff * (double)Map.Physics.StefanBoltzmannConst) * (double)transitionCoeff * (double)(Math.Pow(Physic.CelsToKel(Temperature), 4) - Math.Pow(Physic.CelsToKel(affect.Temperature), 4));

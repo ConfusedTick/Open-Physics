@@ -19,7 +19,7 @@ namespace Sim.Simulation
         public int Smoothness = 15;
 
         public double StartAcceleration { get; set; } = 50d;
-        public double GravityAcceleration { get; set; } = 0.981d;
+        public double GravityAcceleration { get; set; } = 9.81d;
 
         public double StefanBoltzmannConst = 5.670374419d * (double)Math.Pow(10, -8);
 
