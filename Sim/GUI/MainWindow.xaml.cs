@@ -459,15 +459,15 @@ namespace Sim.GUI
         {
             if (Mouse.DirectlyOver != main_canvas) return;
             Point p = Mouse.GetPosition(main_canvas);
-            double x = p.X - MenuPartWidth - 15d;
-            double y = main_canvas.Height - p.Y - 5d;
+            double x = p.X - MenuPartWidth - (SizeMult * SizeAddDeviationMult) - SizeMult;
+            double y = main_canvas.Height - p.Y - (SizeMult / 2);
 
             double mx = x / SizeMult;
             double my = y / SizeMult;
 
             ParticleFactory factory = new ParticleFactory(Map);
 
-            factory.AddNewParticle(1, mx, my, Flags.Empty);
+            factory.AddNewParticle(3, mx, my, Flags.Empty);
         }
 
         private void ParticleRectangleMouseClick(object sender, MouseButtonEventArgs e)
