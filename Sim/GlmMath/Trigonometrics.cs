@@ -9,6 +9,8 @@ namespace Sim.GlmMath
 
         public static double drMultiplier = 0.017453292519943295d;
 
+        public static double PIDivide = 180d / Math.PI;
+
         public static double DegToRad(double degrees)
         {
             return degrees * drMultiplier;

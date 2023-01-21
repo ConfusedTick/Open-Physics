@@ -9,6 +9,7 @@ using System.Windows.Threading;
 using Sim.Particles;
 using Sim.Simulation;
 using Sim.Enums;
+using Sim.Events;
 using Sim.Utils;
 using System.IO;
 
@@ -53,6 +54,8 @@ namespace Sim.Map
         /// Класс рандома используемый для этой карты
         /// </summary>
         public Random Random;
+
+        public EventHandler ParticleAdded;
 
 
         public MapBase(Size size, Physic physic)
@@ -120,6 +123,7 @@ namespace Sim.Map
                 Particles.Add(particle);
                 ParticlesDictionary.Add(particle.Uid, particle);
                 particle.Initialize();
+                ParticleAdded?.Invoke(this, new ParticleAddedEventArgs(particle));
             }
         }
 

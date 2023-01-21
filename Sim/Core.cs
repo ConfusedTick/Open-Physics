@@ -55,6 +55,10 @@ namespace Sim
             heater.InitPosition();
             Map.AddParticle(heater);
 
+            heater = new HeatedParticle(Map, new Vector2(50, 25), Flags.Empty);
+            heater.InitPosition();
+            Map.AddParticle(heater);
+
 
             water = new Water(Map, new Vector2(22, 50), Flags.Empty);
             water.InitPosition();

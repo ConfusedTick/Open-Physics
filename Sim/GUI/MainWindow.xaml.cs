@@ -21,6 +21,7 @@ using Sim.GUI.SubWindows;
 using Sim.Map;
 using Sim.Particles;
 using Sim.Simulation;
+using Sim.Events;
 using Sim;
 using Microsoft.Win32;
 
@@ -211,8 +212,9 @@ namespace Sim.GUI
             // Setting up events
             KeyDown += Window_KeyDown;
             Closed += CloseMainWindow;
-            Map.Physics.PhysicParametersChanged += PhysicsChanged;
+            main_canvas.MouseLeftButtonDown += Main_canvas_MouseLeftButtonDown;
 
+            
             LoadMap();
 
             Logger.Log("Window ready", "MainWindow", '!', ConsoleColor.Green);
@@ -298,6 +300,30 @@ namespace Sim.GUI
             UpdateParticle(part, EventArgs.Empty);
         }
 
+        // NOTE: Will run ONLY after the MainWindow is created for this map!
+        private void NewParticleAdded(object sender, EventArgs ea)
+        {
+            ParticleAddedEventArgs e = (ParticleAddedEventArgs)ea;
+            ParticleBase part = e.Particle;
+            Rectangle rectangle = new Rectangle
+            {
+                Width = Size,
+                Height = Size,
+                Uid = part.Uid.ToString(),
+                Fill = new SolidColorBrush(part.Color),
+
+            };
+            Canvas.SetLeft(rectangle, Math.Round(part.Position.X * SizeMult + 3 * Size, Map.Physics.Smoothness, MidpointRounding.ToEven));
+            Canvas.SetBottom(rectangle, Math.Round(part.Position.Y * SizeMult, Map.Physics.Smoothness, MidpointRounding.ToEven));
+            rectangle.MouseEnter += MouseHoverOn;
+            rectangle.MouseLeave += MouseHoverOff;
+            rectangle.MouseDown += ParticleRectangleMouseClick;
+            part.ParticlePositionChanged += UpdateParticle;
+            part.ParticleRemoved += RemoveParticle;
+            ParticlesRectangles.Add(part.Uid, rectangle);
+            _ = main_canvas.Children.Add(rectangle);
+        }
+
         private void UpdateParticle(object sender, EventArgs e)
         {
             ParticleBase part = (ParticleBase)sender;
@@ -317,6 +343,18 @@ namespace Sim.GUI
 
             _ = rectangle.Dispatcher.BeginInvoke(() => Canvas.SetLeft(rectangle, Math.Round(Position.X * SizeMult + 3 * Size, Map.Physics.Smoothness, MidpointRounding.ToEven)));
             _ = rectangle.Dispatcher.BeginInvoke(() => Canvas.SetBottom(rectangle, Math.Round(Position.Y * SizeMult, Map.Physics.Smoothness, MidpointRounding.ToEven)));
+        }
+
+        public void RemoveParticle(object sender, EventArgs e)
+        {
+            ParticleBase part = (ParticleBase)sender;
+            Rectangle rectangle = ParticlesRectangles[part.Uid];
+            if (rectangle == null)
+            {
+                return;
+            }
+            main_canvas.Children.Remove(rectangle);
+            ParticlesRectangles[part.Uid] = null;
         }
 
         public void ShowParticleSettings(ParticleBase particle)
@@ -387,9 +425,12 @@ namespace Sim.GUI
             Logger.Log("Map saved to " + filePath);
         }
 
+        // NOTE: All map events should be initialized here
         public void LoadMap()
         {
             Logger.Log("Loading map...", "MainWindow");
+            Map.Physics.PhysicParametersChanged += PhysicsChanged;
+            Map.ParticleAdded += NewParticleAdded;
             Rectangle rectangle;
             foreach (ParticleBase part in Map.Particles)
             {
@@ -407,10 +448,26 @@ namespace Sim.GUI
                 rectangle.MouseLeave += MouseHoverOff;
                 rectangle.MouseDown += ParticleRectangleMouseClick;
                 part.ParticlePositionChanged += UpdateParticle;
+                part.ParticleRemoved += RemoveParticle;
                 ParticlesRectangles.Add(part.Uid, rectangle);
                 _ = main_canvas.Children.Add(rectangle);
             }
             Logger.Log("Map loaded", "MainWindow");
+        }
+
+        private void Main_canvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (Mouse.DirectlyOver != main_canvas) return;
+            Point p = Mouse.GetPosition(main_canvas);
+            double x = p.X - MenuPartWidth - 15d;
+            double y = main_canvas.Height - p.Y - 5d;
+
+            double mx = x / SizeMult;
+            double my = y / SizeMult;
+
+            ParticleFactory factory = new ParticleFactory(Map);
+
+            factory.AddNewParticle(1, mx, my, Flags.Empty);
         }
 
         private void ParticleRectangleMouseClick(object sender, MouseButtonEventArgs e)

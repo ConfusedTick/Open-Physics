@@ -67,6 +67,8 @@ namespace Sim.Simulation
 
         public double Weight { get; private set; }
 
+        public bool ApplyGravity;
+
         public List<Force> PermanentForces;
         public List<Force> TemporaryForces;
 
@@ -95,6 +97,7 @@ namespace Sim.Simulation
             PreviousX = x;
             PreviousY = y;
             PreviousAcceleration = acceleration;
+            ApplyGravity = true;
             _x = x;
             _y = y;
             _angle = angle;
@@ -309,7 +312,7 @@ namespace Sim.Simulation
         public double RecalculateWeight()
         {
             Weight = Fixed ? 0d : Particle.Mass * Particle.Map.Physics.GravityAcceleration;
-            if ((PermanentForces.Count - 1) >= 0) PermanentForces[0] = new Force(Particle.Map.Physics.GravityVectorAngle, Weight, this);
+            if ((PermanentForces.Count - 1) >= 0 && ApplyGravity) PermanentForces[0] = new Force(Particle.Map.Physics.GravityVectorAngle, Weight, this);
             return Weight;
         }
 
@@ -328,7 +331,7 @@ namespace Sim.Simulation
 
         public void Initialize()
         {
-            if (PermanentForces.Count == 0) PermanentForces.Add(new Force(Particle.Map.Physics.GravityVectorAngle, Weight, this));
+            if (PermanentForces.Count == 0 && ApplyGravity) PermanentForces.Add(new Force(Particle.Map.Physics.GravityVectorAngle, Weight, this));
         }
 
         // Compensate forces is only stopping Forces, its not stopping the whole object completely
@@ -343,21 +346,55 @@ namespace Sim.Simulation
             return new double[] { X, Y };
         }
 
-        private void Add(int angle, double accel)
-        {
-            double pow2delta = Particle.Map.Physics.DeltaTime * Particle.Map.Physics.DeltaTime;
-            double aS = (double)(accel * pow2delta) / 2;
-            double S = (double)(PreviousAcceleration * pow2delta) / 2;
-            double A = Trigonometrics.RadToDeg(Angle + Math.Atan((double)(aS / S))); // in deg
-            SetAngle((int)A);
-        }
-
         public void CollideWith(Vector2 vector)
         {
-            int angle1 = (int)Trigonometrics.RadToDeg(Math.Atan2(vector.Y - Y, vector.X - X) * (180 / Math.PI));
-            int angle2 = 360 - angle1;
+            return;
+            int angle1 = (int)(Trigonometrics.RadToDeg((double)Math.Atan2((double)vector.X - (double)X, (double)vector.Y - (double)Y)) * (double)Trigonometrics.PIDivide);
+            //int angle2 = 360 - angle1;
 
+            //int angle1 = (int)(180 - (Angle + vector.Angle));
 
+            double vx1 = (double)((double)Speed * (double)Trigonometrics.DCos(angle1));
+            double vy1 = (double)((double)Speed * (double)Trigonometrics.DSin(angle1));
+            double vx2 = (double)((double)vector.Speed * (double)Trigonometrics.DCos(360 - angle1));
+            double vy2 = (double)((double)vector.Speed * (double)Trigonometrics.DSin(360 - angle1));
+
+            double msum = (double)Particle.Mass + (double)vector.Particle.Mass;
+            double vx1f = ((double)((2d * vector.Particle.Mass * vx2) + vx1 * (Particle.Mass - vector.Particle.Mass)) / (msum));
+            double vx2f = ((double)(2d * Particle.Mass * vx1 + vx2 * (vector.Particle.Mass - Particle.Mass)) / (msum));
+
+            double vy1f = ((double)((2d * vector.Particle.Mass * vy2) + vy1 * (Particle.Mass - vector.Particle.Mass)) / (msum));
+            double vy2f = ((double)(2d * Particle.Mass * vy1 + vy2 * (vector.Particle.Mass - Particle.Mass)) / (msum));
+
+            double v1f = Math.Sqrt((double)((double)vx1f * (double)vx1f) + (double)((double)vy1f * (double)vy1f));
+            double v2f = Math.Sqrt((double)((double)vx2f * (double)vx2f) + (double)((double)vy2f * (double)vy2f));
+
+            int a1f = angle1;//(int)Trigonometrics.Correct((int)Trigonometrics.RadToDeg((double)Math.Atan((double)((double)vy1f / (double)vx1f))));
+            int a2f = 360 - angle1;//(int)Trigonometrics.Correct((int)Trigonometrics.RadToDeg((double)Math.Atan((double)((double)vy2f / (double)vx2f))));
+
+            double A1f = (double)(Speed - v1f) / Particle.Map.Physics.DeltaTime;
+            double A2f = (double)(vector.Speed - v2f) / Particle.Map.Physics.DeltaTime;
+
+            double f1f = Particle.Mass * A1f;
+            double f2f = Particle.Mass * A2f;
+
+            Logger.Log("p = " + Speed + " * p = " + vector.Speed);
+            Logger.Log("p1 = " + vx1f + " * p1 = " + vx2f);
+            Logger.Log("p2 = " + vy1f + " * p2 = " + vy2f);
+            Logger.Log("a1 = " + a1f + " * " + " a2 = " + a2f);
+            Logger.Log("\n");
+
+            Force f1 = new Force(a1f, f1f, this);
+            Force f2 = new Force(a2f, f2f, vector);
+
+            f1.Tick();
+            f2.Tick();
+
+            f1.SwitchToContinious();
+            f2.SwitchToContinious();
+
+            TemporaryForces.Add(f1);
+            vector.TemporaryForces.Add(f2);
 
             return;
         }

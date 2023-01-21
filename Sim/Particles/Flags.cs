@@ -60,7 +60,14 @@ namespace Sim.Particles
 
         public bool Get(string par)
         {
-            return Params[par];
+            if (Params.ContainsKey(par))
+            {
+                return Params[par];
+            }
+            else
+            {
+                return false;
+            }
         }
 
         public void Set(string key, bool value)

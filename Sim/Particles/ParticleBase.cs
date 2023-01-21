@@ -167,6 +167,8 @@ namespace Sim.Particles
         public event EventHandler ParticlePositionChanged;
         public event EventHandler ParticleAggregationStateChanged;
         public event EventHandler ParticleTemperatureChanged;
+        public event EventHandler ParticleRemoved;
+        public event EventHandler ParticleInitialized;
         public event EventHandler ParticleCollided;
 
 
@@ -214,7 +216,7 @@ namespace Sim.Particles
         /// </summary>
         public virtual void Initialize()
         {
-
+            ParticleInitialized?.Invoke(this, EventArgs.Empty);
         }
 
         public virtual void DecayInto(ParticleBase[] particles)
@@ -461,6 +463,7 @@ namespace Sim.Particles
         public virtual void Remove()
         {
             Map.RemoveParticle(this);
+            ParticleRemoved?.Invoke(this, EventArgs.Empty);
         }
 
         /// <summary>
@@ -520,6 +523,8 @@ namespace Sim.Particles
 
             Dictionary<ParticleBase, double> affected;// = new Dictionary<ParticleBase, double>() { };
 
+            bool skipHeatRender = false;
+
             switch (Map.Physics.HeatRender)
             {
                 // Может вообще убрать, медленно работает ray casting
@@ -539,7 +544,9 @@ namespace Sim.Particles
                     break;
 
                 case HeatRadiationRenders.NONE:
-                    return false;
+                    affected = RayCasting.LazyRayTrace(this, Map);
+                    skipHeatRender = true;
+                    break;
 
                 default:
                     return false;
@@ -549,6 +556,7 @@ namespace Sim.Particles
             foreach (ParticleBase affect in affected.Keys)
             {
                 if (affected[affect] <= Size.Width) CollideWith(affect);
+                if (skipHeatRender) continue;
                 if (affect.AcceptanceCoeff <= 0) continue;
                 transitionCoeff = (double)(1 / (double)(Math.PI * (double)(affected[affect] * affected[affect]) * halfLenght));
                 heatFlux = (double)((double)EmittingCoeff * (double)affect.AcceptanceCoeff * (double)Map.Physics.StefanBoltzmannConst) * (double)transitionCoeff * (double)(Math.Pow(Physic.CelsToKel(Temperature), 4) - Math.Pow(Physic.CelsToKel(affect.Temperature), 4));
