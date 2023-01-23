@@ -82,6 +82,7 @@ namespace Sim.Particles
         {
             Map = map;
             Factories.Add(map, this);
+            if (!Initialized) Initialize();
         }
 
         /// <summary>
