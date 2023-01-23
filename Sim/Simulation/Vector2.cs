@@ -313,6 +313,7 @@ namespace Sim.Simulation
         {
             Weight = Fixed ? 0d : Particle.Mass * Particle.Map.Physics.GravityAcceleration;
             if ((PermanentForces.Count - 1) >= 0 && ApplyGravity) PermanentForces[0] = new Force(Particle.Map.Physics.GravityVectorAngle, Weight, this);
+            if (!ApplyGravity && (PermanentForces.Count - 1) >= 0) PermanentForces.RemoveAt(0);
             return Weight;
         }
 

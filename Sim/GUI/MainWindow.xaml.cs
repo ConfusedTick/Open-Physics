@@ -41,6 +41,9 @@ namespace Sim.GUI
         // Full size of particle label
         public double SizeMult { get; private set; } = 10.9d;
 
+        // Current particle to place
+        public int CurrentParticle { get; private set; } = (int)ParticleIds.ALPHA;
+
         // Size of label with particle itself
         public double Size { get; private set; }
 
@@ -77,7 +80,7 @@ namespace Sim.GUI
         private const int SaveMapButtonSize = 25;
         // Indicates how much px part with a title takes
         private const int TitlePartHeight = 40;
-        // Indicates how much px takes part with menu (settings, clear)
+        // Indicates how much px takes part with menu (settings, clear, etc...)
         private const int MenuPartWidth = 20;
         // Indicates border between blocks. (SizeMult / Size)
         private const double SizeMultToSizeCoeff = 0.95d;
@@ -212,7 +215,7 @@ namespace Sim.GUI
             // Setting up events
             KeyDown += Window_KeyDown;
             Closed += CloseMainWindow;
-            main_canvas.MouseLeftButtonDown += Main_canvas_MouseLeftButtonDown;
+            main_canvas.MouseRightButtonDown += PlaceParticle;
 
             
             LoadMap();
@@ -317,7 +320,7 @@ namespace Sim.GUI
             Canvas.SetBottom(rectangle, Math.Round(part.Position.Y * SizeMult, Map.Physics.Smoothness, MidpointRounding.ToEven));
             rectangle.MouseEnter += MouseHoverOn;
             rectangle.MouseLeave += MouseHoverOff;
-            rectangle.MouseDown += ParticleRectangleMouseClick;
+            rectangle.MouseLeftButtonDown += ParticleRectangleMouseClick;
             part.ParticlePositionChanged += UpdateParticle;
             part.ParticleRemoved += RemoveParticle;
             ParticlesRectangles.Add(part.Uid, rectangle);
@@ -353,16 +356,18 @@ namespace Sim.GUI
             {
                 return;
             }
+            rectangle.MouseEnter -= MouseHoverOn;
+            rectangle.MouseLeave -= MouseHoverOff;
+            rectangle.MouseLeftButtonDown -= ParticleRectangleMouseClick;
             main_canvas.Children.Remove(rectangle);
-            ParticlesRectangles[part.Uid] = null;
+            ParticlesRectangles.Remove(part.Uid);
+            if (IsOpenedParticleSettings && _particleSettingsWindow.Particle == part) _particleSettingsWindow.Close();
         }
 
         public void ShowParticleSettings(ParticleBase particle)
         {
             if (IsOpenedParticleSettings)
             {
-                //_particleSettingsWindow.Topmost = true;
-                //_particleSettingsWindow.Topmost = false;
                 _particleSettingsWindow.ChangeParticle(particle);
                 return;
             }
@@ -446,7 +451,7 @@ namespace Sim.GUI
                 Canvas.SetBottom(rectangle, Math.Round(part.Position.Y * SizeMult, Map.Physics.Smoothness, MidpointRounding.ToEven));
                 rectangle.MouseEnter += MouseHoverOn;
                 rectangle.MouseLeave += MouseHoverOff;
-                rectangle.MouseDown += ParticleRectangleMouseClick;
+                rectangle.MouseLeftButtonDown += ParticleRectangleMouseClick;
                 part.ParticlePositionChanged += UpdateParticle;
                 part.ParticleRemoved += RemoveParticle;
                 ParticlesRectangles.Add(part.Uid, rectangle);
@@ -455,7 +460,7 @@ namespace Sim.GUI
             Logger.Log("Map loaded", "MainWindow");
         }
 
-        private void Main_canvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        private void PlaceParticle(object sender, MouseButtonEventArgs e)
         {
             if (Mouse.DirectlyOver != main_canvas) return;
             Point p = Mouse.GetPosition(main_canvas);
@@ -465,20 +470,13 @@ namespace Sim.GUI
             double mx = x / SizeMult;
             double my = y / SizeMult;
 
-            ParticleFactory factory = new ParticleFactory(Map);
-
-            factory.AddNewParticle(3, mx, my, Flags.Empty);
+            if (Map.IsInParticleArea(mx, my) == null) ParticleFactory.GetFactory(Map).AddNewParticle(CurrentParticle, Math.Round(mx, MidpointRounding.AwayFromZero), Math.Round(my, MidpointRounding.AwayFromZero), Flags.Empty);
         }
 
         private void ParticleRectangleMouseClick(object sender, MouseButtonEventArgs e)
         {
             Rectangle rectangle = (Rectangle)sender;
             ShowParticleSettings(Map.ParticlesDictionary[Convert.ToInt32(rectangle.Uid)]);
-        }
-
-        public Point GetMousePos()
-        {
-            return PointToScreen(Mouse.GetPosition(this));
         }
 
         private void MouseHoverOff(object sender, EventArgs e)
@@ -509,6 +507,8 @@ namespace Sim.GUI
 
         public void Unsubscribe()
         {
+            Map.Physics.PhysicParametersChanged -= PhysicsChanged;
+            Map.ParticleAdded -= NewParticleAdded;
             _watchingUpdater.Stop();
             if (IsOpenedSettings)
             {
@@ -531,6 +531,7 @@ namespace Sim.GUI
                 rectangle.MouseDown -= ParticleRectangleMouseClick;
             }
             Map.Particles.ForEach(part => part.ParticlePositionChanged -= UpdateParticle);
+            Map.Particles.ForEach(part => part.ParticleRemoved -= RemoveParticle);
             Logger.Log("Window events unsubscribed.", "MainWindow");
         }
 
@@ -570,6 +571,9 @@ namespace Sim.GUI
         private void CloseMainWindow(object sender, EventArgs e)
         {
             Logger.Log("Application close initialized", "MainWindow");
+
+            Unsubscribe();
+
             if (IsOpenedSettings)
             {
                 _settingsWindow.Close();
@@ -580,7 +584,6 @@ namespace Sim.GUI
                 _particleSettingsWindow.Close();
             }
 
-            Unsubscribe();
         }
 
         private void PhysicsChanged(object sender, EventArgs e)

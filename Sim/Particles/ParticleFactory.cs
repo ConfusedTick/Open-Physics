@@ -14,8 +14,67 @@ namespace Sim.Particles
         /// </summary>
         public Map.MapBase Map { get; protected set; }
 
+        public static Dictionary<int, Type> Particles = new Dictionary<int, Type>() { };
+        public static Dictionary<MapBase, ParticleFactory> Factories = new Dictionary<MapBase, ParticleFactory>() { };
+        public static bool Initialized = false;
 
-        public ParticleFactory(MapBase map)
+        /// <summary>
+        /// Возвращает фабрику, отвечающую за соотвественную карту
+        /// </summary>
+        /// <param name="map">Карта</param>
+        /// <returns>Фабрика</returns>
+        public static ParticleFactory GetFactory(MapBase map)
+        {
+            if (!Factories.ContainsKey(map)) Factories.Add(map, new ParticleFactory(map));
+            return Factories[map];
+        }
+
+        /// <summary>
+        /// Инициализирует коллекцию всех частиц по умолчанию
+        /// </summary>
+        public static void Initialize()
+        {
+            if (Initialized)
+            {
+                Logger.Exception(new InvalidOperationException("Particle factory already initialized."));
+                return;
+            }
+            RegisterParticle((int)ParticleIds.ALPHA, typeof(AlphaParticle));
+            RegisterParticle((int)ParticleIds.WATER, typeof(Water));
+            Initialized = true;
+        }
+
+        /// <summary>
+        /// Добавляет новую частицу в базу всех частиц
+        /// </summary>
+        /// <param name="id">Номер частицы</param>
+        /// <param name="type">Класс частицы (должен наследовать ParticleBase)</param>
+        public static void RegisterParticle(int id, Type type)
+        {
+            if (type.IsAssignableFrom(typeof(ParticleBase)))
+            {
+                Logger.Exception(new ArgumentException("Particle is not type of ParticleBase."));
+                return;
+            }
+            if (Particles.ContainsKey(id))
+            {
+                Logger.Exception(new ArgumentException("Particle with id " + id.ToString() + " is already registered."));
+                return;
+            }
+            Particles.Add(id, type);
+        }
+
+        public static void UnRegisterParticle(int id)
+        {
+            Logger.Exception(new InvalidOperationException("Trying to unregister block, only possible in dev build."));
+            Particles.Remove(id);
+        }
+
+        /// <summary>
+        /// Создаёт новую фабрику для карты
+        /// </summary>
+        /// <param name="map">Карта</param>
+        private ParticleFactory(MapBase map)
         {
             Map = map;
         }
@@ -58,27 +117,7 @@ namespace Sim.Particles
         /// <returns>Созданная частица</returns>
         public ParticleBase CreateParticle(int id, Vector2 position, Flags flags)
         {
-            ParticleBase particle = null;
-            switch (id)
-            {
-                case 0:
-                    break;
-
-                case 1:
-                    particle = new Polonium210(Map, position, flags);
-                    break;
-
-                case 2:
-                    particle = new HeatedParticle(Map, position, flags);
-                    break;
-
-                case 3:
-                    particle = new Water(Map, position, flags);
-                    break;
-
-                default:
-                    break;
-            }
+            ParticleBase particle = (ParticleBase)Activator.CreateInstance(Particles[id], new object[] { Map, position, Flags.Empty});
             if (particle != null) particle.InitPosition();
             return particle;
         }
@@ -93,28 +132,8 @@ namespace Sim.Particles
         /// <returns>Созданная частица</returns>
         public ParticleBase CreateParticle(int id, double x, double y, Flags flags)
         {
-            ParticleBase particle = null;
             Vector2 prepared = new Vector2(x, y);
-            switch (id)
-            {
-                case 0:
-                    break;
-
-                case 1:
-                    particle = new Polonium210(Map, prepared, flags);
-                    break;
-
-                case 2:
-                    particle = new HeatedParticle(Map, prepared, flags);
-                    break;
-
-                case 3:
-                    particle = new Water(Map, prepared, flags);
-                    break;
-
-                default:
-                    break;
-            }
+            ParticleBase particle = (ParticleBase)Activator.CreateInstance(Particles[id], new object[] { Map, prepared, Flags.Empty });
             if (particle != null) particle.InitPosition();
             return particle;
         }

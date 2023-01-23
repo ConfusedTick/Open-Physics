@@ -13,12 +13,12 @@ namespace Sim.Particles
     public class Water : ParticleBase
     {
 
-        public new const int Id = 3;
+        public new const int Id = (int)ParticleIds.WATER;
         public new const string Name = "Water";
         public new readonly Size Size = Size.DefaultSize;
         
         public new const double Mass = 18d;
-        public new const AggregationStates CurrentState = AggregationStates.Solid;
+        public new const AggregationStates CurrentState = AggregationStates.Liquid;
         public new const double Temperature = 20d;
         public new const double EmittingCoeff = 0.2d;
         public new const double AcceptanceCoeff = 0.15d;
@@ -28,34 +28,31 @@ namespace Sim.Particles
         public new const double EvaporationPoint = 100d;
         public new const double EvaporationHeat = 40650d;
 
-        public new const bool RequireRandomTick = true;
-        public new const int RandomTickRarity = 100;
+        public new const bool RequireRandomTick = false;
+
+        public readonly Dictionary<AggregationStates, Color> StateColors = new Dictionary<AggregationStates, Color>() 
+        {
+            { AggregationStates.Solid, Colors.Blue },
+            { AggregationStates.Liquid, Colors.MediumAquamarine },
+            { AggregationStates.Gas, Colors.Aquamarine },
+        };
+
+        public readonly Dictionary<AggregationStates, string> StateNames = new Dictionary<AggregationStates, string>()
+        {
+            { AggregationStates.Solid, "Ice" },
+            { AggregationStates.Liquid, "Water"},
+            { AggregationStates.Gas, "Steam" },
+        };
 
         public Water(MapBase map, Vector2 position, Flags parameters) : base(map, Id, Name, position, Colors.Blue, parameters, Size.DefaultSize, Mass, CurrentState, Temperature, EmittingCoeff, AcceptanceCoeff, HeatCapacity, MeltingPoint, MeltingHeat, EvaporationPoint, EvaporationHeat, RequireRandomTick)
         {
         }
 
-        public override void Initialize()
-        {
-            base.Initialize();
-            base.RandomTickRarity = RandomTickRarity;
-        }
-
         public override void ChangeAggregationState(AggregationStates newState)
         {
             base.ChangeAggregationState(newState);
-            if (newState == AggregationStates.Gas)
-            {
-                base.Name = "Steam";
-                base.Color = Colors.Aquamarine;
-            }
+            base.Name = StateNames[newState];
+            base.Color = StateColors[newState];
         }
-
-        
-        public override void RandomTick()
-        {
-
-        }
-
     }
 }

@@ -82,7 +82,7 @@ namespace Sim.Map
 
                 mapSize = new Size(reader.ReadInt32(), reader.ReadInt32());
                 map = new MapBase(mapSize, physics);
-                factory = new ParticleFactory(map);
+                factory = ParticleFactory.GetFactory(map);
                 while (reader.BaseStream.Position != reader.BaseStream.Length)
                 {
                     pos = new Vector2(x: reader.ReadDouble(), y: reader.ReadDouble(), angle: reader.ReadInt32(), acceleration: reader.ReadDouble());

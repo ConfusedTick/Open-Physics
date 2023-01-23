@@ -18,8 +18,6 @@ namespace Sim
 
         public static Core LastInstance;
 
-        public const bool IsDevBuild = true;
-
         private Map.MapBase Map { get; set; }
 
         public TimeSpan TPS;
@@ -32,14 +30,13 @@ namespace Sim
         {
             LastInstance = this;
 
+            ParticleFactory.Initialize();
+
             Logger.Log("Preparing core...", "Core");
 
             LoadAll(Path.Combine(Directory.GetCurrentDirectory(), "data/"));
 
             LoadMap();
-
-            //Map.StartTicking();
-
 
             Logger.Log("Core ready", "Core", '!', ConsoleColor.Green);
             return Map;
@@ -47,42 +44,6 @@ namespace Sim
 
         public void LoadMap()
         {
-            Water water = new Water(Map, new Vector2(10, 22), Flags.Empty);
-            water.InitPosition();
-            Map.AddParticle(water);
-
-            HeatedParticle heater = new HeatedParticle(Map, new Vector2(50, 30), Flags.Empty);
-            heater.InitPosition();
-            Map.AddParticle(heater);
-
-            heater = new HeatedParticle(Map, new Vector2(50, 25), Flags.Empty);
-            heater.InitPosition();
-            Map.AddParticle(heater);
-
-
-            water = new Water(Map, new Vector2(22, 50), Flags.Empty);
-            water.InitPosition();
-            Map.AddParticle(water);
-
-            heater = new HeatedParticle(Map, new Vector2(45, 23), Flags.Empty);
-            heater.InitPosition();
-            Map.AddParticle(heater);
-
-            water = new Water(Map, new Vector2(31, 45), Flags.Empty);
-            water.InitPosition();
-            Map.AddParticle(water);
-
-            heater = new HeatedParticle(Map, new Vector2(21, 21), Flags.Empty);
-            heater.InitPosition();
-            Map.AddParticle(heater);
-
-            water = new Water(Map, new Vector2(5, 5), Flags.Empty);
-            water.InitPosition();
-            Map.AddParticle(water);
-
-            heater = new HeatedParticle(Map, new Vector2(3, 10), Flags.Empty);
-            heater.InitPosition();
-            Map.AddParticle(heater);
         }
 
         public void LoadAll(string cfgDir)

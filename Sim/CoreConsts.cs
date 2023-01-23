@@ -8,6 +8,6 @@ namespace Sim
     {
 
         public const int CurrentVersion = 12;
-
+        public const bool DevBuild = true;
     }
 }

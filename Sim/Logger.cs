@@ -33,7 +33,7 @@ namespace Sim
 
         public static void Exception(Exception e)
         {
-            if (Core.IsDevBuild) Log(e.Message, "System", '!', ConsoleColor.Red);
+            if (CoreConsts.DevBuild) Log(e.Message, "System", '!', ConsoleColor.Red);
             else throw e;
         }
 

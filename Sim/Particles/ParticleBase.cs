@@ -495,7 +495,10 @@ namespace Sim.Particles
         /// <summary>
         /// Случайный тик
         /// </summary>
-        public abstract void RandomTick();
+        public virtual void RandomTick()
+        {
+
+        }
 
         /// <summary>
         /// Тик

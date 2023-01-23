@@ -67,6 +67,7 @@ namespace Sim.Map
             // fffffff - time in MICROseconds to be more random
             Ticker.Tick += Tick;
             Ticker.Interval = TimeSpan.FromSeconds(physic.DeltaTime);
+            if (!ParticleFactory.Initialized) ParticleFactory.Initialize();
         }
 
         /// <summary>
@@ -118,6 +119,11 @@ namespace Sim.Map
         /// <param name="particle">Частица</param>
         public void AddParticle(ParticleBase particle)
         {
+            if (!ParticleFactory.Particles.ContainsKey(particle.Id))
+            {
+                Logger.Log("Particle with " + particle.Id + " is not registered.");
+                return;
+            }
             if (!Particles.Contains(particle) && IsAllowedPosition(particle.Position))
             {
                 Particles.Add(particle);
@@ -217,7 +223,7 @@ namespace Sim.Map
         }
         public void Tick(object sender, EventArgs e)
         {
-            foreach (ParticleBase particle in Particles)
+            foreach (ParticleBase particle in Particles.ToList())
             {
 
                 particle.Tick();
@@ -291,7 +297,7 @@ namespace Sim.Map
 
                 mapSize = new Size(reader.ReadInt32(), reader.ReadInt32());
                 map = new MapBase(mapSize, physics);
-                factory = new ParticleFactory(map);
+                factory = ParticleFactory.GetFactory(map);
                 while (reader.BaseStream.Position != reader.BaseStream.Length)
                 {
                     pos = new Vector2(x: reader.ReadDouble(), y: reader.ReadDouble(), angle: reader.ReadInt32(), acceleration: reader.ReadDouble());
