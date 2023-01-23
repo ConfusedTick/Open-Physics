@@ -25,7 +25,7 @@ namespace Sim.Particles
         /// <returns>Фабрика</returns>
         public static ParticleFactory GetFactory(MapBase map)
         {
-            if (!Factories.ContainsKey(map)) Factories.Add(map, new ParticleFactory(map));
+            if (!Factories.ContainsKey(map)) return new ParticleFactory(map);
             return Factories[map];
         }
 
@@ -64,6 +64,10 @@ namespace Sim.Particles
             Particles.Add(id, type);
         }
 
+        /// <summary>
+        /// Удаляет частицу из списка зарегестрированных
+        /// </summary>
+        /// <param name="id">Айди частицы</param>
         public static void UnRegisterParticle(int id)
         {
             Logger.Exception(new InvalidOperationException("Trying to unregister block, only possible in dev build."));
@@ -77,6 +81,7 @@ namespace Sim.Particles
         private ParticleFactory(MapBase map)
         {
             Map = map;
+            Factories.Add(map, this);
         }
 
         /// <summary>
