@@ -13,43 +13,37 @@ using System.Threading;
 
 namespace Sim
 {
+    /// <summary>
+    /// Основной класс, загружающий игру
+    /// </summary>
     public class Core
     {
 
-        public static Core LastInstance;
+        public static MapBase Map;
+        public static Physic Physics;
 
-        private Map.MapBase Map { get; set; }
-
-        public TimeSpan TPS;
-
-        public ulong TickId { get; private set; }
 
         public static Random Random = new Random();
 
-        public Map.MapBase Prepare()
+        
+        public static void InitializeGameStart(Size size)
         {
-            LastInstance = this;
-
-            ParticleFactory.Initialize();
-
             Logger.Log("Preparing core...", "Core");
-
+            if (!ParticleFactory.Initialized) ParticleFactory.Initialize();
             LoadAll(Path.Combine(Directory.GetCurrentDirectory(), "data/"));
-
-            LoadMap();
-
+            Map = new MapBase(size, Physics);
             Logger.Log("Core ready", "Core", '!', ConsoleColor.Green);
-            return Map;
         }
 
-        public void LoadMap()
+        public static void ChangeMap(MapBase newMap)
         {
+            Map = newMap;
         }
 
-        public void LoadAll(string cfgDir)
+        public static void LoadAll(string cfgDir)
         {
             Logger.Log("Loading configs from " + cfgDir, "Core");
-            Physic physics = new Physic();
+            Physics = new Physic();
 
             string physicsfile = Path.Combine(cfgDir, "lastconf.txt");
             if (!File.Exists(physicsfile))
@@ -62,25 +56,12 @@ namespace Sim
                 }
 
                 File.Create(physicsfile).Close();
-                physics.Save(physicsfile);
+                Physics.Save(physicsfile);
             }
 
-            physics.Load(Path.Combine(cfgDir, "lastconf.txt"));
-
-            Size ms = new Size(80, 80);
-            MapBase mp = new MapBase(ms, physics);
-            Map = mp;
+            Physics.Load(Path.Combine(cfgDir, "lastconf.txt"));
 
             Logger.Log("Configs loaded", "Core");
         }
-
-        public void PrintInfo()
-        {
-
-        }
-
-
-        
-
     }
 }

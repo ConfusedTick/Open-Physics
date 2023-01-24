@@ -402,6 +402,7 @@ namespace Sim.GUI
 
                 ClearMap();
                 Map = MapBase.Load(filePath, Map.Physics);
+                Core.ChangeMap(Map);
                 LoadMap();
                 Logger.Log("New map opened");
             }

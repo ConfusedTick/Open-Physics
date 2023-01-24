@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Linq;
 using Sim.Map;
 using Sim.Simulation;
 using Sim.Particles.ParticlesList;
@@ -39,8 +39,9 @@ namespace Sim.Particles
                 Logger.Exception(new InvalidOperationException("Particle factory already initialized."));
                 return;
             }
-            RegisterParticle((int)ParticleIds.ALPHA, typeof(AlphaParticle));
-            RegisterParticle((int)ParticleIds.WATER, typeof(Water));
+            RegisterParticle(typeof(BetaParticle));
+            RegisterParticle(typeof(AlphaParticle));
+            RegisterParticle(typeof(Water));
             Initialized = true;
         }
 
@@ -62,6 +63,11 @@ namespace Sim.Particles
                 return;
             }
             Particles.Add(id, type);
+        }
+
+        public static void RegisterParticle(Type type)
+        {
+            RegisterParticle((int)type.GetField("Id").GetValue(type), type);
         }
 
         /// <summary>

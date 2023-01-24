@@ -21,20 +21,16 @@ namespace Sim
 
         public MainWindow MainWindow { get; private set; }
 
-        public Core Core;
-        public MapBase Map;
+        public MapBase Map => Core.Map;
 
         public App()
         {
             AppDomain.CurrentDomain.ProcessExit += new EventHandler(CurrentDomain_ProcessExit);
-            Core = new Core();
             File.Delete(Logger.SaveFile);
             Logger.Log("New session. Local time: " + DateTime.Now.ToString("h:mm:ss"), "System", '!', ConsoleColor.Magenta);
-            MapBase map = Core.Prepare();
-            Map = map;
+            Core.InitializeGameStart(new Sim.Map.Size(80, 80));
 
-
-            MainWindow = new MainWindow(map);
+            MainWindow = new MainWindow(Map);
             MainWindow.Show();
         }
 

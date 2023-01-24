@@ -10,17 +10,35 @@ namespace Sim.Particles
     // Not every id currently has the particle associated with it
     public enum ParticleIds : int
     {
-        BETA, BETA_PARTICLE = -2,
-        ALPHA, ALPHA_PARTICLE = -1,
+        
+        BETA = -2,
+        BETA_PARTICLE = -2,
+        
+        ALPHA = -1,
+        ALPHA_PARTICLE = -1,
 
-        WATER, STEAM, ICE = 1,
+        ICE = 1,
+        WATER = 1,
+        STEAM = 1,
+
         DEUTERIUM = 102,
         TRITIUM = 103,
         
-        SODIUM, NATRIUM = 2,
+        SODIUM = 2,
+        NATRIUM = 2,
         POTASSIUM = 3,
 
-        CARBON, DIAMOND, GRAPHITE = 4,
+        CARBON = 4,
+        DIAMOND = 4,
+        GRAPHITE = 4,
+
+        COPPER = 5,
+        CUPRUM = 5,
+        
+        FERRUM = 6,
+        IRON = 6,
+
+        ALLIMINIUM = 7,
 
 
     }
