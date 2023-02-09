@@ -42,7 +42,7 @@ namespace Sim.GUI
         public double SizeMult { get; private set; } = 10.9d;
 
         // Current particle to place
-        public int CurrentParticle { get; private set; } = (int)ParticleIds.ALPHA;
+        public int CurrentParticle { get; private set; } = (int)ParticleIds.WATER;
 
         // Size of label with particle itself
         public double Size { get; private set; }
@@ -438,7 +438,7 @@ namespace Sim.GUI
             Map.Physics.PhysicParametersChanged += PhysicsChanged;
             Map.ParticleAdded += NewParticleAdded;
             Rectangle rectangle;
-            foreach (ParticleBase part in Map.Particles)
+            foreach (ParticleBase part in Map.Particles.ToList())
             {
                 rectangle = new Rectangle
                 {
@@ -658,6 +658,9 @@ namespace Sim.GUI
                     "\nForce=" + Math.Round(particle.Position.NetForce, Map.Physics.Smoothness) + " N" +
                     "\nAggregState=" + particle.CurrentState +
                     "\nHeatBuffer=" + Math.Round(particle.HeatBuffer, Map.Physics.Smoothness) + " J" +
+                    "\nRequireRandomTicks=" + particle.RequireRandomTick +
+                    "\nRandomTicksRarity=" + particle.RandomTickRarity + 
+                    //"\nLifeTick=" + particle.LifeTick + 
                     "\nFixed=" + particle.Fixed;
 
         }

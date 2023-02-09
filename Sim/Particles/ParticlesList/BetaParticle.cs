@@ -29,7 +29,7 @@ namespace Sim.Particles.ParticlesList
         public new const double EvaporationHeat = 0d;
 
         public new const bool RequireRandomTick = true;
-        public new const int RandomTickRarity = 100;
+        public new const int RandomTickRarity = 1000;
 
         public BetaParticle(MapBase map, Vector2 position, Flags parameters) : base(map, Id, Name, position, Colors.Brown, parameters, Size.DefaultSize, Mass, CurrentState, Temperature, EmittingCoeff, AcceptanceCoeff, HeatCapacity, MeltingPoint, MeltingHeat, EvaporationPoint, EvaporationHeat, RequireRandomTick)
         {
@@ -41,12 +41,28 @@ namespace Sim.Particles.ParticlesList
             base.Initialize();
             base.RandomTickRarity = RandomTickRarity;
             base.Position.RecalculateWeight();
+            base.Position.TemporaryForces.Add(new Force(Core.Random.Next(0, 360), Core.Random.Next(3, 6), base.Position));
         }
-
 
         public override void RandomTick()
         {
             base.Remove();
+        }
+
+        public override void CollideWith(ParticleBase particle)
+        {
+            if (particle.Mass > 4) base.Remove();
+            return;
+        }
+
+        public override void SetTemperature(double newtemp)
+        {
+            return;
+        }
+
+        public override void ChangeAggregationState(AggregationStates newState)
+        {
+            return;
         }
 
     }

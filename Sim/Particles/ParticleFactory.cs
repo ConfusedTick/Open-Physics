@@ -41,6 +41,7 @@ namespace Sim.Particles
             }
             RegisterParticle(typeof(BetaParticle));
             RegisterParticle(typeof(AlphaParticle));
+            RegisterParticle(typeof(Hydrogen));
             RegisterParticle(typeof(Water));
             Initialized = true;
         }
@@ -62,6 +63,7 @@ namespace Sim.Particles
                 Logger.Exception(new ArgumentException("Particle with id " + id.ToString() + " is already registered."));
                 return;
             }
+            Logger.Log("Registered particle with id " + id.ToString(), "ParticleFactoryRegisterParticle");
             Particles.Add(id, type);
         }
 
@@ -115,6 +117,11 @@ namespace Sim.Particles
         /// <returns>Добавленная на карту частица</returns>
         public ParticleBase AddNewParticle(int id, double x, double y, Flags flags)
         {
+            if (!Particles.ContainsKey(id))
+            {
+                Logger.Exception(new InvalidOperationException("Particle with id " + id + " is not registered in the ParticleFactory"));
+                return null;
+            }
             ParticleBase particle = CreateParticle(id, x, y, flags);
             Map.AddParticle(particle);
             return particle;
@@ -129,6 +136,11 @@ namespace Sim.Particles
         /// <returns>Созданная частица</returns>
         public ParticleBase CreateParticle(int id, Vector2 position, Flags flags)
         {
+            if (!Particles.ContainsKey(id))
+            {
+                Logger.Exception(new InvalidOperationException("Particle with id " + id + " is not registered in the ParticleFactory"));
+                return null;
+            }
             ParticleBase particle = (ParticleBase)Activator.CreateInstance(Particles[id], new object[] { Map, position, Flags.Empty});
             if (particle != null) particle.InitPosition();
             return particle;

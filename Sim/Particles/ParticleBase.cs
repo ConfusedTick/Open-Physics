@@ -55,6 +55,11 @@ namespace Sim.Particles
         public Vector2 Position;
 
         /// <summary>
+        /// Количество тиков, которое прожила частица
+        /// </summary>
+        public ulong LifeTick { get; protected set; }
+
+        /// <summary>
         /// Визуальный цвет партикла
         /// </summary>
         public Color Color { get; protected set; }
@@ -221,13 +226,15 @@ namespace Sim.Particles
 
         public virtual void DecayInto(ParticleBase[] particles)
         {
+            Remove();
+
             foreach (ParticleBase bs in particles)
             {
                 bs.InitPosition();
                 bs.Position.SetXForced(Position.PreviousX);
                 bs.Position.SetYForced(Position.PreviousY);
+                Map.AddParticle(bs);
             }
-            Remove();
         }
 
         protected ParticleBase()
@@ -497,7 +504,6 @@ namespace Sim.Particles
         /// </summary>
         public virtual void RandomTick()
         {
-
         }
 
         /// <summary>
@@ -505,22 +511,24 @@ namespace Sim.Particles
         /// </summary>
         public virtual void Tick()
         {
-            UpdateOnNextTick = HeatRenderTick() | (PreviousState != CurrentState);
+            UpdateOnNextTick = RayCastingTick() | (PreviousState != CurrentState);
             if (Map.Physics.EnablePositionTick) UpdateOnNextTick |= Position.Tick();
             if (UpdateOnNextTick)
             {
                 ParticlePositionChanged?.Invoke(this, new ParticleVisibleParametersEventArgs());
             }
 
+            LifeTick++;
+
             UpdateOnNextTick = false;
 
         }
 
         /// <summary>
-        /// Тик рендера тепла
+        /// Тик рендера тепла и столкновений
         /// </summary>
         /// <returns>Требуется ли обновления на следующем кадре</returns>
-        protected virtual bool HeatRenderTick()
+        protected virtual bool RayCastingTick()
         {
             if (EmittingCoeff <= 0d) return false;
 

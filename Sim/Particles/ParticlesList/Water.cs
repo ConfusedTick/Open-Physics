@@ -7,7 +7,7 @@ using Sim.Map;
 using Sim.Simulation;
 using Sim.Enums;
 
-namespace Sim.Particles
+namespace Sim.Particles.ParticlesList
 {
 
     public class Water : ParticleBase

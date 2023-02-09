@@ -41,12 +41,30 @@ namespace Sim.Particles.ParticlesList
             base.Initialize();
             base.RandomTickRarity = RandomTickRarity;
             base.Position.RecalculateWeight();
+            base.Position.TemporaryForces.Add(new Force(Core.Random.Next(0, 360), Core.Random.Next(3, 10), base.Position));
         }
 
 
         public override void RandomTick()
         {
             base.Remove();
+        }
+
+        public override void CollideWith(ParticleBase particle)
+        {
+            
+            if (particle.Mass > 2) base.Remove();
+            return;
+        }
+
+        public override void SetTemperature(double newtemp)
+        {
+            return;
+        }
+
+        public override void ChangeAggregationState(AggregationStates newState)
+        {
+            return;
         }
 
     }

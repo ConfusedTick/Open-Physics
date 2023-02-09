@@ -8,7 +8,7 @@ namespace Sim
     class Logger
     {
 
-        public static List<string> ignoreProcesses = new List<string>() { };
+        public static List<string> ignoreProcesses = new List<string>() { /**"ParticleFactoryRegisterParticle"**/ };
 
         public static List<char> ignoreLogSymbol = new List<char>() { };
 

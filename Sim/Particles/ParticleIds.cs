@@ -21,6 +21,8 @@ namespace Sim.Particles
         WATER = 1,
         STEAM = 1,
 
+        HYDROGEN = 8,
+
         DEUTERIUM = 102,
         TRITIUM = 103,
         

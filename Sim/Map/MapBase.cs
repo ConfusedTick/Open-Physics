@@ -302,6 +302,12 @@ namespace Sim.Map
                 {
                     pos = new Vector2(x: reader.ReadDouble(), y: reader.ReadDouble(), angle: reader.ReadInt32(), acceleration: reader.ReadDouble());
                     particle = factory.CreateParticle(id: reader.ReadInt32(), pos, flags: Flags.Empty);
+                    if (particle == null)
+                    {
+                        Logger.Exception(new FormatException("Can not create particle, while loading new map, skipping particle initialization"));
+                        reader.BaseStream.Seek(26, SeekOrigin.Current);
+                        continue;
+                    }
                     particle.SetFixed(reader.ReadBoolean());
                     particle.SetTemperature(reader.ReadDouble());
                     particle.SetHeatBuffer(reader.ReadDouble());

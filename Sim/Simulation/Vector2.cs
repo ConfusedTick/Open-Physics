@@ -116,13 +116,13 @@ namespace Sim.Simulation
             if (Fixed) return false;
             UpdateOnNextTick = false;
 
-            foreach (Force pf in PermanentForces)
+            foreach (Force pf in PermanentForces.ToList())
             {
                 AddForceToDirection(pf.Angle, pf.NetForce);
                 TickForce(pf);
             }
 
-            foreach (Force tf in TemporaryForces)
+            foreach (Force tf in TemporaryForces.ToList())
             {
                 AddForceToDirection(tf.Angle, tf.NetForce);
                 TickForce(tf);

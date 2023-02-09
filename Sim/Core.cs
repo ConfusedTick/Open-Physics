@@ -20,10 +20,11 @@ namespace Sim
     {
 
         public static MapBase Map;
+        public static MapBase PreviousMap;
         public static Physic Physics;
 
 
-        public static Random Random = new Random();
+        public static Random Random = Utils.Utils.GetNewRandom();
 
         
         public static void InitializeGameStart(Size size)
@@ -37,6 +38,7 @@ namespace Sim
 
         public static void ChangeMap(MapBase newMap)
         {
+            PreviousMap = Map;
             Map = newMap;
         }
 
