@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using Sim.Commands;
 using System.Threading;
 
 namespace Sim
@@ -35,6 +36,13 @@ namespace Sim
         {
             if (CoreConsts.DevBuild) Log(e.Message, "System", '!', ConsoleColor.Red);
             else throw e;
+        }
+
+        public static void PrintInformation()
+        {
+            Log("LiveConsole: " + LiveCommandConsole.IsOpened);
+            Log("Is developer build: " + CoreConsts.DevBuild);
+            Log("Version: " + CoreConsts.CurrentVersion);
         }
 
         public static void Log(string message, string processName = "System", char logSymbol = '*', ConsoleColor textColor = ConsoleColor.DarkGray)

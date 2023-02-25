@@ -8,8 +8,10 @@ using Sim.Particles;
 using Sim.Particles.ParticlesList;
 using Sim.Simulation;
 using Sim.Map;
+using Sim.Commands;
 using System.Windows.Threading;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Sim
 {
@@ -34,6 +36,7 @@ namespace Sim
             LoadAll(Path.Combine(Directory.GetCurrentDirectory(), "data/"));
             Map = new MapBase(size, Physics);
             Logger.Log("Core ready", "Core", '!', ConsoleColor.Green);
+            Task.Run(LiveCommandConsole.StartNew);
         }
 
         public static void ChangeMap(MapBase newMap)

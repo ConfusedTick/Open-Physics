@@ -121,7 +121,7 @@ namespace Sim.Map
         {
             if (!ParticleFactory.Particles.ContainsKey(particle.Id))
             {
-                Logger.Log("Particle with " + particle.Id + " is not registered.");
+                Logger.Log("Particle with " + particle.Id + " is not registered in particle factory.");
                 return;
             }
             if (!Particles.Contains(particle) && IsAllowedPosition(particle.Position))
@@ -293,7 +293,14 @@ namespace Sim.Map
             Vector2 pos;
             using (BinaryReader reader = new BinaryReader(new FileStream(file, FileMode.OpenOrCreate)))
             {
-                if (reader.ReadString() != "OPMF") throw new FormatException("Invalid map file format.");
+                if (reader.ReadString() != "OPMF")
+                {
+                    Logger.Exception(new FormatException("Invalid map file format."));
+                    Logger.Log("Exception while loading map from " + file, "Physics", '!', ConsoleColor.Red);
+                    Logger.Log("This can lead to major malfunctions. Application will be closed.", textColor: ConsoleColor.Red);
+                    Environment.Exit(100);
+                    return null;
+                }
 
                 mapSize = new Size(reader.ReadInt32(), reader.ReadInt32());
                 map = new MapBase(mapSize, physics);

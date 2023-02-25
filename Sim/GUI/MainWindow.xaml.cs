@@ -399,13 +399,17 @@ namespace Sim.GUI
             string filePath = dialog.FileName;
             if (File.Exists(filePath))
             {
-
-                ClearMap();
-                Map = MapBase.Load(filePath, Map.Physics);
-                Core.ChangeMap(Map);
-                LoadMap();
-                Logger.Log("New map opened");
+                ChangeMap(MapBase.Load(filePath, Map.Physics));
             }
+        }
+
+        public void ChangeMap(MapBase mp)
+        {
+            ClearMap();
+            Map = mp;
+            Core.ChangeMap(Map);
+            LoadMap();
+            Logger.Log("New map opened");
         }
 
         public void SaveMap()

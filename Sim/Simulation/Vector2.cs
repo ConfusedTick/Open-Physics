@@ -136,6 +136,11 @@ namespace Sim.Simulation
             return UpdateOnNextTick || saved;
         }
 
+        public void SetForceUpdateOnNextTick(bool s)
+        {
+            ForceUpdateOnNextTick = s;
+        }
+
         public void TickForce(Force force)
         {
             force.Tick();

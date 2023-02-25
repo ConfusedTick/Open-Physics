@@ -200,7 +200,7 @@ namespace Sim.Simulation
                 File.AppendAllText(filename, "#" + DateTime.Now.ToString("D") + "\n");
                 File.AppendAllText(filename, "gravityangle=" + GravityVectorAngle + "\n");
                 File.AppendAllText(filename, "secondspertick=" + DeltaTime + "\n");
-                File.AppendAllText(filename, "#Smoothness of displaying values (1 to 15), reduces lags\n");
+                File.AppendAllText(filename, "#Smoothness of real values (1 to 15), reduces lags\n");
                 File.AppendAllText(filename, "smoothness=" + Smoothness + "\n");
                 File.AppendAllText(filename, "startacceleration=" + StartAcceleration + "\n");
                 File.AppendAllText(filename, "gravityacceleration=" + GravityAcceleration + "\n");
@@ -211,8 +211,8 @@ namespace Sim.Simulation
                 File.AppendAllText(filename, "raycastraynumbers=" + RaycastRayNumbers + "\n");
                 File.AppendAllText(filename, "#Ray caster depth step. Bigger value - less lags, but less accuracy.\n");
                 File.AppendAllText(filename, "casterdepthstep=" + CasterDepthStep + "\n");
-                File.AppendAllText(filename, "#Heat radiation render: Ray Tracing(RT), Ray Casting(RC), None(NONE)\n");
-                File.AppendAllText(filename, "#RT faster then RC, NONE is the fastest, just no heat render \n");
+                File.AppendAllText(filename, "#Heat radiation render: Ray Tracing(RT), Ray Casting(RC), Lazy Ray Tracing (LRT), None(NONE)\n");
+                File.AppendAllText(filename, "#RT faster then RC, NONE is the fastest, just no heat render. LRT will be even used if NONE, only for collision detection \n");
                 File.AppendAllText(filename, "heatradiationrender=" + HeatRender.ToString() + "\n");
                 File.AppendAllText(filename, "MinTemperature=" + MinTemperature.ToString() + "\n");
                 File.AppendAllText(filename, "MaxTemperature=" + MaxTemperature.ToString() + "\n");
