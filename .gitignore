@@ -1,3 +1,5 @@
 .vs/
 bin/
 obj/
+clean.bat
+backup.bat
