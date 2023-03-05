@@ -89,7 +89,7 @@ namespace Sim.GUI
         // Indicates stack panel image border in GenerateStackPanel function
         private const double ImageBorderThickness = -0.5d;
         // Indicates visual info label update interval between ticks
-        private const int WatchingUpdaterInterval = 500;
+        private const int WatchingUpdaterInterval = 250;
 
         private const string WindowTitle = "Open Physics - Demo 1P";
 
@@ -155,13 +155,13 @@ namespace Sim.GUI
             // Open settings button ---
             _openSettings = new Button
             {
+                Focusable = false,
                 FontFamily = MainFontFamily,
                 Width = OpenSettingsButtonSize,
                 Height = OpenSettingsButtonSize,
+                Content = GenerateImageStackPanel(Directory.GetCurrentDirectory() + "/Assets/Buttons/openSettings.png"),
             };
-            _openSettings.Content = GenerateImageStackPanel(Directory.GetCurrentDirectory() + "/Assets/Buttons/openSettings.png");
             _openSettings.Click += OpenSettings;
-            _openSettings.Focusable = false;
             Canvas.SetBottom(_openSettings, 0);
             Canvas.SetLeft(_openSettings, 0);
             _ = main_canvas.Children.Add(_openSettings);
@@ -170,13 +170,13 @@ namespace Sim.GUI
             // New page button ---
             _newPageButton = new Button
             {
+                Focusable = false,
                 FontFamily = MainFontFamily,
                 Width = NewPageButtonSize,
                 Height = NewPageButtonSize,
                 Content = GenerateImageStackPanel(Directory.GetCurrentDirectory() + "/Assets/Buttons/newPage.png"),
             };
             _newPageButton.Click += ClearMap;
-            _newPageButton.Focusable = false;
             Canvas.SetBottom(_newPageButton, 0 + OpenSettingsButtonSize);
             Canvas.SetLeft(_newPageButton, 0);
             _ = main_canvas.Children.Add(_newPageButton);
@@ -186,13 +186,13 @@ namespace Sim.GUI
             // Pick up map save file button ---
             _pickUpMapSaveButton = new Button
             {
+                Focusable = false,
                 FontFamily = MainFontFamily,
                 Width = PickUpMapSaveButtonSize,
                 Height = PickUpMapSaveButtonSize,
                 Content = GenerateImageStackPanel(Directory.GetCurrentDirectory() + "/Assets/Buttons/pickUpMapSave.png"),
             };
             _pickUpMapSaveButton.Click += PickUpMapSaveButtonClick;
-            _pickUpMapSaveButton.Focusable = false;
             Canvas.SetBottom(_pickUpMapSaveButton, 0 + OpenSettingsButtonSize + NewPageButtonSize);
             Canvas.SetLeft(_pickUpMapSaveButton, 0);
             _ = main_canvas.Children.Add(_pickUpMapSaveButton);
@@ -200,13 +200,13 @@ namespace Sim.GUI
             // Save map file button ---
             _saveMapButton = new Button
             {
+                Focusable = false,
                 FontFamily = MainFontFamily,
                 Width = SaveMapButtonSize,
                 Height = SaveMapButtonSize,
                 Content = GenerateImageStackPanel(Directory.GetCurrentDirectory() + "/Assets/Buttons/saveMap.png"),
             };
             _saveMapButton.Click += SaveMapButtonClick;
-            _saveMapButton.Focusable = false;
             Canvas.SetBottom(_saveMapButton, 0 + OpenSettingsButtonSize + NewPageButtonSize + PickUpMapSaveButtonSize);
             Canvas.SetLeft(_saveMapButton, 0);
             _ = main_canvas.Children.Add(_saveMapButton);
@@ -352,6 +352,7 @@ namespace Sim.GUI
         {
             ParticleBase part = (ParticleBase)sender;
             Rectangle rectangle = ParticlesRectangles[part.Uid];
+
             if (rectangle == null)
             {
                 return;
@@ -359,8 +360,12 @@ namespace Sim.GUI
             rectangle.MouseEnter -= MouseHoverOn;
             rectangle.MouseLeave -= MouseHoverOff;
             rectangle.MouseLeftButtonDown -= ParticleRectangleMouseClick;
+            if (rectangle.IsMouseOver) _infoLabel.Content = "";
             main_canvas.Children.Remove(rectangle);
-            ParticlesRectangles.Remove(part.Uid);
+            if (!ParticlesRectangles.Remove(part.Uid))
+            {
+                Logger.Log("Deletion process interrupted. Collection changed in action.");
+            }
             if (IsOpenedParticleSettings && _particleSettingsWindow.Particle == part) _particleSettingsWindow.Close();
         }
 
@@ -664,7 +669,7 @@ namespace Sim.GUI
                     "\nHeatBuffer=" + Math.Round(particle.HeatBuffer, Map.Physics.Smoothness) + " J" +
                     "\nRequireRandomTicks=" + particle.RequireRandomTick +
                     "\nRandomTicksRarity=" + particle.RandomTickRarity + 
-                    //"\nLifeTick=" + particle.LifeTick + 
+                    "\nLifeTick=" + particle.LifeTick + 
                     "\nFixed=" + particle.Fixed;
 
         }
@@ -672,6 +677,10 @@ namespace Sim.GUI
         private void MouseHoverOn(object sender, EventArgs e)
         {
             Rectangle rectangle = (Rectangle)sender;
+            if (!Map.ParticlesDictionary.ContainsKey(Convert.ToInt32(rectangle.Uid)))
+            {
+                return;
+            }
             ParticleBase particle = Map.ParticlesDictionary[Convert.ToInt32(rectangle.Uid)];
             if (particle != null)
             {

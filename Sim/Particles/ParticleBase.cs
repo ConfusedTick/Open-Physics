@@ -515,7 +515,7 @@ namespace Sim.Particles
             if (Map.Physics.EnablePositionTick) UpdateOnNextTick |= Position.Tick();
             if (UpdateOnNextTick)
             {
-                ParticlePositionChanged?.Invoke(this, new ParticleVisibleParametersEventArgs());
+                ParticlePositionChanged?.Invoke(this, new ParticleVisibleParametersEventArgs(this));
             }
 
             LifeTick++;

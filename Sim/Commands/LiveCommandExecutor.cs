@@ -48,12 +48,43 @@ namespace Sim.Commands
                         case "physics":
                             Map.Physics.Load(cmd.Arguments[1]);
                             break;
+
+                        default:
+                            Logger.Log("Element " + cmd.Arguments[0] + " is not found.", "LCE", textColor: ConsoleColor.DarkRed);
+                            return;
+                    }
+                    break;
+
+                case "remove":
+                    switch (cmd.Arguments[0])
+                    {
+                        case "glvalue":
+                            GlobalValues.RemoveValue(cmd.Arguments[1]);
+                            break;
+
+                        case "particle":
+                            int x, y;
+                            x = Convert.ToInt32(cmd.Arguments[1]);
+                            y = Convert.ToInt32(cmd.Arguments[2]);
+                            ParticleBase partl = Map.GetParticle(x, y);
+                            if (partl == null)
+                            {
+                                Logger.Log("Particle on " + x.ToString() + ", " + y.ToString() + " is not found.", "LCE");
+                                return;
+                            }
+                            partl.Remove();
+                            break;
                     }
                     break;
 
                 case "get":
                     switch (cmd.Arguments[0])
                     {
+
+                        case "glvalue":
+                            Logger.Log("Value of " + cmd.Arguments[1] + ": " + GlobalValues.GetValue(cmd.Arguments[1]));
+                            break;
+
                         case "particle":
                             int x, y;
                             x = Convert.ToInt32(cmd.Arguments[1]);
@@ -91,14 +122,27 @@ namespace Sim.Commands
                                     Logger.Log(partl.HeatCapacity.ToString(), "LCE");
                                     break;
 
+                                default:
+                                    Logger.Log("Parameter " + cmd.Arguments[3] + " is not found.", "LCE", textColor: ConsoleColor.DarkRed);
+                                    return;
+
                             }
                             break;
+
+                        default:
+                            Logger.Log("Argument " + cmd.Arguments[0] + " is not defined.", "LCE", textColor: ConsoleColor.DarkRed);
+                            return;
+
                     }
                     break;
 
                 case "set":
                     switch (cmd.Arguments[0])
                     {
+
+                        case "glvalue":
+                            GlobalValues.SetValue(cmd.Arguments[1], cmd.Arguments[2]);
+                            break;
 
                         case "physics":
                             break;
@@ -142,13 +186,61 @@ namespace Sim.Commands
                                     partl.SetHeatBuffer(Convert.ToInt32(cmd.Arguments[4]));
                                     break;
 
+                                default:
+                                    Logger.Log("Parameter " + cmd.Arguments[3] + " is not found.", "LCE", textColor: ConsoleColor.DarkRed);
+                                    return;
+
                             }
                             break;
+
+                        default:
+                            Logger.Log("Argument " + cmd.Arguments[0] + " is not defined.", "LCE", textColor: ConsoleColor.DarkRed);
+                            return;
+
+                    }
+                    break;
+
+                case "if":
+                    string val = cmd.Arguments[0];
+                    switch (cmd.Arguments[1])
+                    {
+                        case "exists":
+                            if (GlobalValues.ContainsValue(val))
+                            {
+                                ExecuteScript(cmd.Arguments[2]);
+                            }
+                            break;
+
+                        case "nexists":
+                            if (!GlobalValues.ContainsValue(val))
+                            {
+                                ExecuteScript(cmd.Arguments[2]);
+                            }
+                            break;
+
+                        case "equals":
+                            if (GlobalValues.GetValue(val) == cmd.Arguments[2])
+                            {
+                                ExecuteScript(cmd.Arguments[3]);
+                            }
+                            break;
+
+                        case "nequals":
+                            if (GlobalValues.GetValue(val) == cmd.Arguments[2])
+                            {
+                                ExecuteScript(cmd.Arguments[3]);
+                            }
+                            break;
+
+                        default:
+                            Logger.Log("Argument " + cmd.Arguments[0] + " is not defined.", "LCE", textColor: ConsoleColor.DarkRed);
+                            return;
+
                     }
                     break;
 
                 default:
-                    Logger.Log("Command " + cmd.CommandName + " is not found.", "LCE");
+                    Logger.Log("Command " + cmd.CommandName + " is not found.", "LCE", textColor: ConsoleColor.DarkRed);
                     return;
             }
             Logger.Log("Executed.", "LCE");
@@ -157,14 +249,16 @@ namespace Sim.Commands
         public static void ExecuteScript(string scriptname)
         {
             List<Command> execute = new List<Command>();
+            Command cmd;
             foreach (string l in File.ReadAllLines(scriptname))
             {
-                execute.Add(Command.ParseString(l));
-                if ((execute[^1].CommandName == "start" || execute[^1].CommandName == "execute") && execute[^1].Arguments[0] == scriptname)
+                cmd = Command.ParseString(l);
+                if ((cmd.CommandName == "start" || cmd.CommandName == "execute") && cmd.Arguments[0] == scriptname)
                 {
-                    Logger.Log("Script " + scriptname + " is trying to execute itself.", "LCE");
-                    execute.RemoveAt(execute.Count - 1);
+                    Logger.Log("Script " + scriptname + " is trying to execute itself.", "LCE", '!', ConsoleColor.DarkYellow);
+                    continue;
                 }
+                execute.Add(cmd);
             }
             execute.ForEach(comm => ExecuteCommand(comm));
         }

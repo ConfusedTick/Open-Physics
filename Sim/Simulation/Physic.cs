@@ -19,6 +19,7 @@ namespace Sim.Simulation
         public int Smoothness = 15;
 
         public double StartAcceleration { get; set; } = 50d;
+
         public double GravityAcceleration { get; set; } = 9.81d;
 
         public double StefanBoltzmannConst = 5.670374419d * (double)Math.Pow(10, -8);
@@ -183,7 +184,7 @@ namespace Sim.Simulation
         public void Update()
         {
             Logger.Log("Physics parameters updated", "Physics");
-            PhysicParametersChanged?.Invoke(this, new PhysicParametersChangedEventArgs());
+            PhysicParametersChanged?.Invoke(this, new PhysicParametersChangedEventArgs(this));
         }
 
         public static double CelsToKel(double cels)

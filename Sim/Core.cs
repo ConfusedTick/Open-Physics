@@ -36,6 +36,7 @@ namespace Sim
             LoadAll(Path.Combine(Directory.GetCurrentDirectory(), "data/"));
             Map = new MapBase(size, Physics);
             Logger.Log("Core ready", "Core", '!', ConsoleColor.Green);
+            ParticleBase bs = ParticleFactory.GetFactory(Map).AddNewParticle(ParticleIds.WATER, new Vector2(10, 10), Flags.Empty);
             Task.Run(LiveCommandConsole.StartNew);
         }
 

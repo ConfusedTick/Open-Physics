@@ -107,6 +107,11 @@ namespace Sim.Particles
             return particle;
         }
 
+        public ParticleBase AddNewParticle(ParticleIds id, Vector2 position, Flags flags)
+        {
+            return AddNewParticle((int)id, position, flags);
+        }
+
         /// <summary>
         /// Создаёт и добавляет новую частицу на карту
         /// </summary>
@@ -127,6 +132,11 @@ namespace Sim.Particles
             return particle;
         }
 
+        public ParticleBase AddNewParticle(ParticleIds id, double x, double y, Flags flags)
+        {
+            return AddNewParticle((int)id, x, y, flags);
+        }
+
         /// <summary>
         /// Создаёт новую частицу
         /// </summary>
@@ -141,9 +151,14 @@ namespace Sim.Particles
                 Logger.Exception(new InvalidOperationException("Particle with id " + id + " is not registered in the ParticleFactory"));
                 return null;
             }
-            ParticleBase particle = (ParticleBase)Activator.CreateInstance(Particles[id], new object[] { Map, position, Flags.Empty});
+            ParticleBase particle = (ParticleBase)Activator.CreateInstance(Particles[id], new object[] { Map, position, Flags.Empty });
             if (particle != null) particle.InitPosition();
             return particle;
+        }
+
+        public ParticleBase CreateParticle(ParticleIds id, Vector2 position, Flags flags)
+        {
+            return CreateParticle(id, position, flags);
         }
 
         /// <summary>
@@ -160,6 +175,10 @@ namespace Sim.Particles
             ParticleBase particle = (ParticleBase)Activator.CreateInstance(Particles[id], new object[] { Map, prepared, Flags.Empty });
             if (particle != null) particle.InitPosition();
             return particle;
+        }
+        public ParticleBase CreateParticle(ParticleIds id, double x, double y, Flags flags)
+        {
+            return CreateParticle((int)id, x, y, flags);
         }
     }
 }

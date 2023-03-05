@@ -51,7 +51,7 @@ namespace Sim.Particles.ParticlesList
 
         public override void CollideWith(ParticleBase particle)
         {
-            if (particle.Mass > 4) base.Remove();
+            if (particle.Mass > 6) base.Remove();
             return;
         }
 

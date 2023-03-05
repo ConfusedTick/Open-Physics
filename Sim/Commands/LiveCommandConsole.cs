@@ -28,15 +28,17 @@ namespace Sim.Commands
 
         static async Task ParseLine(string input)
         {
+            LiveCommandExecutor.ExecuteCommand(Command.ParseString(input));
+            /**
             try
             {
                 LiveCommandExecutor.ExecuteCommand(Command.ParseString(input));
             }catch(Exception e)
             {
-                Logger.Log("Can not execute command.");
+                Logger.Log("Command can not be executed.", "LCE");
                 Logger.Exception(e);
             }
-            
+            **/
         }
     }
 }

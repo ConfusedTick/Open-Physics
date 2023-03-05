@@ -71,6 +71,7 @@ namespace Sim.Simulation
 
         public List<Force> PermanentForces;
         public List<Force> TemporaryForces;
+        public List<Force> DeleteOnNextTick;
 
         public bool Fixed;
 
@@ -92,7 +93,8 @@ namespace Sim.Simulation
             Size = new Size(sizeX, sizeY);
             Fixed = isFixed;
             PermanentForces = new List<Force> { };
-            TemporaryForces = new List<Force> { }; 
+            TemporaryForces = new List<Force> { };
+            DeleteOnNextTick = new List<Force> { };
             PreviousAngle = angle;
             PreviousX = x;
             PreviousY = y;
@@ -118,16 +120,23 @@ namespace Sim.Simulation
 
             foreach (Force pf in PermanentForces.ToList())
             {
-                AddForceToDirection(pf.Angle, pf.NetForce);
                 TickForce(pf);
+                AddForceToDirection(pf.Angle, pf.NetForce);
             }
 
             foreach (Force tf in TemporaryForces.ToList())
             {
-                AddForceToDirection(tf.Angle, tf.NetForce);
                 TickForce(tf);
+                AddForceToDirection(tf.Angle, tf.NetForce);
             }
-            
+
+            foreach (Force df in DeleteOnNextTick.ToList())
+            {
+                TickForce(df);
+                AddForceToDirection(df.Angle, df.NetForce);
+                DeleteOnNextTick.Remove(df);
+            }
+
             SetAcceleration(NetForce / Particle.Mass);
             IncreaseSpeed(Acceleration * Particle.Map.Physics.DeltaTime);
             
@@ -362,8 +371,8 @@ namespace Sim.Simulation
 
             double vx1 = (double)((double)Speed * (double)Trigonometrics.DCos(angle1));
             double vy1 = (double)((double)Speed * (double)Trigonometrics.DSin(angle1));
-            double vx2 = (double)((double)vector.Speed * (double)Trigonometrics.DCos(360 - angle1));
-            double vy2 = (double)((double)vector.Speed * (double)Trigonometrics.DSin(360 - angle1));
+            double vx2 = (double)((double)vector.Speed * (double)Trigonometrics.DCos(180 + angle1));
+            double vy2 = (double)((double)vector.Speed * (double)Trigonometrics.DSin(180 + angle1));
 
             double msum = (double)Particle.Mass + (double)vector.Particle.Mass;
             double vx1f = ((double)((2d * vector.Particle.Mass * vx2) + vx1 * (Particle.Mass - vector.Particle.Mass)) / (msum));
@@ -376,7 +385,7 @@ namespace Sim.Simulation
             double v2f = Math.Sqrt((double)((double)vx2f * (double)vx2f) + (double)((double)vy2f * (double)vy2f));
 
             int a1f = angle1;//(int)Trigonometrics.Correct((int)Trigonometrics.RadToDeg((double)Math.Atan((double)((double)vy1f / (double)vx1f))));
-            int a2f = 360 - angle1;//(int)Trigonometrics.Correct((int)Trigonometrics.RadToDeg((double)Math.Atan((double)((double)vy2f / (double)vx2f))));
+            int a2f = 180 + angle1;//(int)Trigonometrics.Correct((int)Trigonometrics.RadToDeg((double)Math.Atan((double)((double)vy2f / (double)vx2f))));
 
             double A1f = (double)(Speed - v1f) / Particle.Map.Physics.DeltaTime;
             double A2f = (double)(vector.Speed - v2f) / Particle.Map.Physics.DeltaTime;
@@ -393,14 +402,14 @@ namespace Sim.Simulation
             Force f1 = new Force(a1f, f1f, this);
             Force f2 = new Force(a2f, f2f, vector);
 
-            f1.Tick();
-            f2.Tick();
+            //f1.Tick();
+            //f2.Tick();
 
             f1.SwitchToContinious();
             f2.SwitchToContinious();
 
-            TemporaryForces.Add(f1);
-            vector.TemporaryForces.Add(f2);
+            DeleteOnNextTick.Add(f1);
+            vector.DeleteOnNextTick.Add(f2);
 
             return;
         }

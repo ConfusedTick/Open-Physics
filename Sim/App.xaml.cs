@@ -10,6 +10,7 @@ using System.IO;
 using Sim.Particles;
 using Sim.GUI;
 using Sim.Map;
+using Sim.Commands;
 
 namespace Sim
 {
@@ -29,8 +30,17 @@ namespace Sim
             File.Delete(Logger.SaveFile);
             Logger.Log("New session. Local time: " + DateTime.Now.ToString("h:mm:ss"), "System", '!', ConsoleColor.Magenta);
             Core.InitializeGameStart(new Sim.Map.Size(80, 80));
+            //Thread th = new Thread(() => CreateWindow(Map));
+            //th.SetApartmentState(ApartmentState.STA);
+            //th.Start();
+            CreateWindow(Map);
+            //LiveCommandConsole.StartNew();
 
-            MainWindow = new MainWindow(Map);
+        }
+
+        public static void CreateWindow(MapBase map)
+        {
+            MainWindow = new MainWindow(map);
             MainWindow.Show();
         }
 
