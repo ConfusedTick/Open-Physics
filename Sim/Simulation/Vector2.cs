@@ -71,7 +71,7 @@ namespace Sim.Simulation
 
         public List<Force> PermanentForces;
         public List<Force> TemporaryForces;
-        public List<Force> DeleteOnNextTick;
+        public List<Force> OneTickForces;
 
         public bool Fixed;
 
@@ -94,7 +94,7 @@ namespace Sim.Simulation
             Fixed = isFixed;
             PermanentForces = new List<Force> { };
             TemporaryForces = new List<Force> { };
-            DeleteOnNextTick = new List<Force> { };
+            OneTickForces = new List<Force> { };
             PreviousAngle = angle;
             PreviousX = x;
             PreviousY = y;
@@ -130,11 +130,11 @@ namespace Sim.Simulation
                 AddForceToDirection(tf.Angle, tf.NetForce);
             }
 
-            foreach (Force df in DeleteOnNextTick.ToList())
+            foreach (Force df in OneTickForces.ToList())
             {
                 TickForce(df);
                 AddForceToDirection(df.Angle, df.NetForce);
-                DeleteOnNextTick.Remove(df);
+                OneTickForces.Remove(df);
             }
 
             SetAcceleration(NetForce / Particle.Mass);
@@ -408,8 +408,8 @@ namespace Sim.Simulation
             f1.SwitchToContinious();
             f2.SwitchToContinious();
 
-            DeleteOnNextTick.Add(f1);
-            vector.DeleteOnNextTick.Add(f2);
+            OneTickForces.Add(f1);
+            vector.OneTickForces.Add(f2);
 
             return;
         }
