@@ -10,12 +10,12 @@ using Sim.Enums;
 namespace Sim.Particles.ParticlesList
 {
 
-    public class Water : ParticleBase
+    public class Water : ParticleBase, ILiquid
     {
 
         public new const int Id = (int)ParticleIds.WATER;
         public new const string Name = "Water";
-        public new readonly Size Size = Size.DefaultSize;
+        public new readonly Size Size = Size.GetDefaultSize();
         
         public new const double Mass = 18d;
         public new const AggregationStates CurrentState = AggregationStates.Liquid;
@@ -44,7 +44,7 @@ namespace Sim.Particles.ParticlesList
             { AggregationStates.Gas, "Steam" },
         };
 
-        public Water(MapBase map, Vector2 position, Flags parameters) : base(map, Id, Name, position, Colors.Blue, parameters, Size.DefaultSize, Mass, CurrentState, Temperature, EmittingCoeff, AcceptanceCoeff, HeatCapacity, MeltingPoint, MeltingHeat, EvaporationPoint, EvaporationHeat, RequireRandomTick)
+        public Water(MapBase map, Vector2 position, Flags parameters) : base(map, Id, Name, position, Colors.Blue, parameters, Size.GetDefaultSize(), Mass, CurrentState, Temperature, EmittingCoeff, AcceptanceCoeff, HeatCapacity, MeltingPoint, MeltingHeat, EvaporationPoint, EvaporationHeat, RequireRandomTick)
         {
         }
 

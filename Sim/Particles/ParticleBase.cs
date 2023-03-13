@@ -100,6 +100,11 @@ namespace Sim.Particles
         public double Temperature { get; protected set; }
 
         /// <summary>
+        /// Текущая темепература
+        /// </summary>
+        public double PreviousTemperature { get; protected set; }
+
+        /// <summary>
         /// Зафиксирована ли частица на месте
         /// </summary>
         public bool Fixed { get; protected set; }
@@ -110,19 +115,24 @@ namespace Sim.Particles
         public readonly double MaxDepth;
 
         /// <summary>
-        /// Длина половина партикла
+        /// Длина половины окружности вписанной в квадрат партикла
         /// </summary>
         public readonly double halfLenght;
 
         /// <summary>
         /// Коэффициент излучения
         /// </summary>
-        public double EmittingCoeff { get; protected set; }
+        public double EmmitingCoeff { get; protected set; }
 
         /// <summary>
         /// Коэффициент поглощения
         /// </summary>
         public double AcceptanceCoeff { get; protected set; }
+
+        /// <summary>
+        /// Прозрачность частицы
+        /// </summary>
+        public double Transparency { get; protected set; }
 
         /// <summary>
         /// Теплоемкость
@@ -194,7 +204,8 @@ namespace Sim.Particles
             PreviousState = CurrentState;
             CurrentState = startState;
             Temperature = startTemperature;
-            EmittingCoeff = emittingCoeff;
+            PreviousTemperature = startTemperature;
+            EmmitingCoeff = emittingCoeff;
             AcceptanceCoeff = acceptanceCoeff;
             HeatCapacity = heatCapacity;
             HeatBuffer = 0d;
@@ -207,6 +218,7 @@ namespace Sim.Particles
             CalculateAggregationState(Temperature);
             RequireRandomTick = requireRandomTicks;
             Map.Physics.PhysicParametersChanged += MapPhysicsUpdated;
+            Transparency = 0.1d;
             //Initialize();
         }
 
@@ -323,6 +335,11 @@ namespace Sim.Particles
             HeatBuffer = newBuffer;
         }
 
+        public virtual bool IsInstrument()
+        {
+            return false;
+        }
+
         /// <summary>
         /// Изменяет температуру по тепловому потоку
         /// </summary>
@@ -339,7 +356,26 @@ namespace Sim.Particles
                 return;
             }
 
-            double exp = (double)(flux / (double)(HeatCapacity * Mass));
+            double exp = 0;
+
+            // Учёт буффера тепла при уменьшении температуры
+
+            if (flux < 0 && HeatBuffer > 0)
+            {
+                if (Math.Abs(flux) > HeatBuffer)
+                {
+                    exp = (double)((flux - HeatBuffer) / (double)(HeatCapacity * Mass));
+                    HeatBuffer = 0d;
+                }
+                else
+                {
+                    HeatBuffer -= flux;
+                }
+            }
+            else
+            {
+                exp = (double)(flux / (double)(HeatCapacity * Mass));
+            }
             IncreaseTemperature(exp);
         }
 
@@ -376,6 +412,7 @@ namespace Sim.Particles
             {
                 newtemp = Map.Physics.MaxTemperature;
             }
+            PreviousTemperature = Temperature;
             Temperature = newtemp;
             CalculateAggregationState(Temperature);
         }
@@ -530,49 +567,29 @@ namespace Sim.Particles
         /// <returns>Требуется ли обновления на следующем кадре</returns>
         protected virtual bool RayCastingTick()
         {
-            if (EmittingCoeff <= 0d) return false;
-
-            Dictionary<ParticleBase, double> affected;// = new Dictionary<ParticleBase, double>() { };
-
-            bool skipHeatRender = false;
-
-            switch (Map.Physics.HeatRender)
-            {
-                // Может вообще убрать, медленно работает ray casting
-                // EDIT: Он теперь вообще выдаёт ошибку :)
-                // TODO: Исправить
-                case HeatRadiationRenders.RC:
-                    double[] mc = CalculateMassCenter();
-                    affected = RayCasting.RayCast(mc[0], mc[1], Position.Angle, Map.Physics.RaycastRayNumbers, Convert.ToInt32(MaxDepth) + 10, 360, Map);
-                    break;
-
-                case HeatRadiationRenders.RT:
-                    affected = RayCasting.RayTrace(this, Map);
-                    break;
-
-                case HeatRadiationRenders.LRT:
-                    affected = RayCasting.LazyRayTrace(this, Map);
-                    break;
-
-                case HeatRadiationRenders.NONE:
-                    affected = RayCasting.LazyRayTrace(this, Map);
-                    skipHeatRender = true;
-                    break;
-
-                default:
-                    return false;
-            }
+            if (EmmitingCoeff <= 0d) return false;
+            List<KeyValuePair<ParticleBase, (double, double)>> affected = RayCasting.RayTraceAll(this, Map);
+            Dictionary<ParticleBase, double> collisions = RayCasting.LazyCollisionRayTrace(this, Map);
             double transitionCoeff;
             double heatFlux;
-            foreach (ParticleBase affect in affected.Keys)
+
+
+            foreach (ParticleBase pt in collisions.Keys)
             {
-                if (affected[affect] <= Size.Width) CollideWith(affect);
-                if (skipHeatRender) continue;
-                if (affect.AcceptanceCoeff <= 0) continue;
-                transitionCoeff = (double)(1 / (double)(Math.PI * (double)(affected[affect] * affected[affect]) * halfLenght));
-                heatFlux = (double)((double)EmittingCoeff * (double)affect.AcceptanceCoeff * (double)Map.Physics.StefanBoltzmannConst) * (double)transitionCoeff * (double)(Math.Pow(Physic.CelsToKel(Temperature), 4) - Math.Pow(Physic.CelsToKel(affect.Temperature), 4));
+                if (collisions[pt] < Size.GetDefaultSize().Width)
+                {
+                    CollideWith(pt);
+                    pt.CollideWith(this);
+                }
+            }
+
+            foreach (KeyValuePair<ParticleBase, (double, double)> kvp in affected)
+            {
+                if (kvp.Key.AcceptanceCoeff <= 0) continue;
+                transitionCoeff = (double)(1 / (double)(Math.PI * (double)((double)kvp.Value.Item1 * (double)kvp.Value.Item1) * halfLenght));
+                heatFlux = kvp.Value.Item2 * (double)((double)EmmitingCoeff * (double)kvp.Key.AcceptanceCoeff * (double)Map.Physics.StefanBoltzmannConst) * (double)transitionCoeff * (double)(Math.Pow(Physic.CelsToKel(Temperature), 4) - (double)Math.Pow(Physic.CelsToKel(kvp.Key.Temperature), 4));
                 ChangeTemperatureByHeatFlux(-heatFlux);
-                affect.ChangeTemperatureByHeatFlux(heatFlux);
+                kvp.Key.ChangeTemperatureByHeatFlux(heatFlux);
             }
             return UpdateOnNextTick;
         }

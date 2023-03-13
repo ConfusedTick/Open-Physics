@@ -10,6 +10,7 @@
 	<PublishReadyToRun>true</PublishReadyToRun>
     <ApplicationIcon />
     <StartupObject />
+    <AssemblyName>HeatRender</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

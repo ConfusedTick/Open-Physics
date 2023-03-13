@@ -24,19 +24,22 @@ namespace Sim.Simulation
 
         public double StefanBoltzmannConst = 5.670374419d * (double)Math.Pow(10, -8);
 
-        public int RaycastRayNumbers = 2000;
-
         public double CasterDepthStep = 0.9d;
-
-        public HeatRadiationRenders HeatRender = HeatRadiationRenders.RT;
 
         public double MinTemperature = -273.25d;
 
-        public double MaxTemperature = 10000000;
+        public double MaxTemperature = 2500;
+
+        public double TemperatureDelta;
 
         public event EventHandler PhysicParametersChanged;
 
-        public bool EnablePositionTick = true;
+        public bool EnablePositionTick = false;
+
+        public Physic()
+        {
+            TemperatureDelta = Math.Abs(MaxTemperature - MinTemperature);
+        }
 
         public object Clone()
         {
@@ -105,44 +108,8 @@ namespace Sim.Simulation
                         StefanBoltzmannConst = Convert.ToDouble(args[1]);
                         break;
 
-                    case "raycastraynumbers":
-                        RaycastRayNumbers = Convert.ToInt32(args[1]);
-                        break;
-
                     case "casterdepthstep":
                         CasterDepthStep = Convert.ToDouble(args[1]);
-                        break;
-
-                    case "heatradiationrender":
-                        switch (args[1].ToLower())
-                        {
-                            case "rc":
-                                HeatRender = HeatRadiationRenders.RC;
-                                break;
-
-                            case "rt":
-                                HeatRender = HeatRadiationRenders.RT;
-                                break;
-
-                            case "lrt":
-                                HeatRender = HeatRadiationRenders.LRT;
-                                break;
-
-                            case "none":
-                                HeatRender = HeatRadiationRenders.NONE;
-                                break;
-
-                            default:
-                                try
-                                {
-                                    HeatRender = (HeatRadiationRenders)Convert.ToByte(args[1]);
-                                }
-                                catch (Exception)
-                                {
-                                    Logger.Log("Undefined value of parameter: " + args[0], "Physics", '!', ConsoleColor.Red);
-                                }
-                                break;
-                        }
                         break;
 
 
@@ -160,20 +127,20 @@ namespace Sim.Simulation
                         break;
                 }
             }
-            if (CasterDepthStep > Size.DefaultSize.Width || CasterDepthStep > Size.DefaultSize.Height)
+            if (CasterDepthStep > Size.GetDefaultSize().Width || CasterDepthStep > Size.GetDefaultSize().Height)
             {
                 Logger.Log("Warning: depth step is bigger then standart size.", "Physics", '!', ConsoleColor.Yellow);
                 string minvalname;
                 double minval;
-                if (Size.DefaultSize.Width > Size.DefaultSize.Height)
+                if (Size.GetDefaultSize().Width > Size.GetDefaultSize().Height)
                 {
                     minvalname = "height";
-                    minval = Size.DefaultSize.Height;
+                    minval = Size.GetDefaultSize().Height;
                 }
                 else
                 {
                     minvalname = "width";
-                    minval = Size.DefaultSize.Width;
+                    minval = Size.GetDefaultSize().Width;
                 }
                 Logger.Log("Please, lower " + minvalname + " to " + (minval - 0.1d), "Physics", '!', ConsoleColor.Yellow);
             }
@@ -183,6 +150,7 @@ namespace Sim.Simulation
 
         public void Update()
         {
+            TemperatureDelta = Math.Abs(MaxTemperature - MinTemperature);
             Logger.Log("Physics parameters updated", "Physics");
             PhysicParametersChanged?.Invoke(this, new PhysicParametersChangedEventArgs(this));
         }
@@ -209,12 +177,10 @@ namespace Sim.Simulation
                 File.AppendAllText(filename, "#Heat render parameters.\n");
                 File.AppendAllText(filename, "#Ray cast ray numbers. Bigger value - more lags, but more accuracy.\n");
                 File.AppendAllText(filename, "#Not used in RT render.\n");
-                File.AppendAllText(filename, "raycastraynumbers=" + RaycastRayNumbers + "\n");
                 File.AppendAllText(filename, "#Ray caster depth step. Bigger value - less lags, but less accuracy.\n");
                 File.AppendAllText(filename, "casterdepthstep=" + CasterDepthStep + "\n");
                 File.AppendAllText(filename, "#Heat radiation render: Ray Tracing(RT), Ray Casting(RC), Lazy Ray Tracing (LRT), None(NONE)\n");
                 File.AppendAllText(filename, "#RT faster then RC, NONE is the fastest, just no heat render. LRT will be even used if NONE, only for collision detection \n");
-                File.AppendAllText(filename, "heatradiationrender=" + HeatRender.ToString() + "\n");
                 File.AppendAllText(filename, "MinTemperature=" + MinTemperature.ToString() + "\n");
                 File.AppendAllText(filename, "MaxTemperature=" + MaxTemperature.ToString() + "\n");
                 Logger.Log("Physics parameters saved to " + filename, "Physics");

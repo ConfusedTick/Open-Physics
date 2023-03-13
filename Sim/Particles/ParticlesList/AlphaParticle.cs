@@ -15,7 +15,7 @@ namespace Sim.Particles.ParticlesList
 
         public new const int Id = (int)ParticleIds.ALPHA;
         public new const string Name = "Alpha particle";
-        public new readonly Size Size = Size.DefaultSize;
+        public new readonly Size Size = Size.GetDefaultSize();
 
         public new const double Mass = 1d;
         public new const AggregationStates CurrentState = AggregationStates.Solid;
@@ -31,7 +31,7 @@ namespace Sim.Particles.ParticlesList
         public new const bool RequireRandomTick = true;
         public new const int RandomTickRarity = 100;
 
-        public AlphaParticle(MapBase map, Vector2 position, Flags parameters) : base(map, Id, Name, position, Colors.White, parameters, Size.DefaultSize, Mass, CurrentState, Temperature, EmittingCoeff, AcceptanceCoeff, HeatCapacity, MeltingPoint, MeltingHeat, EvaporationPoint, EvaporationHeat, RequireRandomTick)
+        public AlphaParticle(MapBase map, Vector2 position, Flags parameters) : base(map, Id, Name, position, Colors.White, parameters, Size.GetDefaultSize(), Mass, CurrentState, Temperature, EmittingCoeff, AcceptanceCoeff, HeatCapacity, MeltingPoint, MeltingHeat, EvaporationPoint, EvaporationHeat, RequireRandomTick)
         {
         }
 

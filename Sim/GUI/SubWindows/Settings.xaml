@@ -15,22 +15,10 @@
         <Label x:Name="start_acceleration_label" Content="Start acceleration:" HorizontalAlignment="Left" Margin="0,109,0,0" VerticalAlignment="Top" FontFamily="Consolas"/>
         <Label x:Name="gravity_acceleration_label" Content="Gravity acceleration: " HorizontalAlignment="Left" Margin="0,133,0,0" VerticalAlignment="Top" FontFamily="Consolas"/>
         <Label x:Name="stefanboltzmannconst_label" Content="Stefan Boltzmann const:" HorizontalAlignment="Left" Margin="0,157,0,0" VerticalAlignment="Top" FontFamily="Consolas"/>
-        <Label x:Name="raycast_ray_numbers_label" Content="Ray cast ray numbers:" HorizontalAlignment="Left" Margin="0,181,0,0" VerticalAlignment="Top" FontFamily="Consolas"/>
-
-        <Label x:Name="heat_radiation_render_label" Content="Heat radiation render:" HorizontalAlignment="Left" Margin="0,229,0,0" VerticalAlignment="Top" FontFamily="Consolas"/>
-        <Label x:Name="min_temperature_label" Content="Min temperature:" HorizontalAlignment="Left" Margin="0,253,0,0" VerticalAlignment="Top" FontFamily="Consolas"/>
-        <Label x:Name="max_temperature_label" Content="Max temperature:" HorizontalAlignment="Left" Margin="0,277,0,0" VerticalAlignment="Top" FontFamily="Consolas"/>
-        <ComboBox x:Name="heat_radiation_render_combobox" Margin="160,232,13,0" Height="16" VerticalAlignment="Top" FontFamily="Consolas" IsSynchronizedWithCurrentItem="False" FontSize="10" SelectedIndex="0" BorderThickness="0,0,0,0">
-            <ComboBoxItem x:Name="none_list_item" Content="none" FontFamily="Consolas" FontSize="12"/>
-            <ComboBoxItem x:Name="rt_list_item" Content="raytrace" FontFamily="Consolas" FontSize="12"/>
-            <ComboBoxItem x:Name="rc_list_item" Content="raycast" FontFamily="Consolas" FontSize="12"/>
-            <ComboBoxItem x:Name="lrt_list_item" Content="lazyrt" FontFamily="Consolas" FontSize="12"/>
-        </ComboBox>
-        <Label Content="Ray cast depth step:" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,205,0,0" FontFamily="Consolas"/>
-        <TextBox x:Name="max_temperature_textbox" HorizontalAlignment="Left" Margin="160,283,0,0" Text="MaxTemp" TextWrapping="Wrap" VerticalAlignment="Top" Width="67" FontFamily="Consolas" BorderThickness="0,0,0,0" BorderBrush="#FFACACAC" Background="#FFE5E5E5" FontSize="11" Height="13"/>
-        <TextBox x:Name="min_temperature_textbox" HorizontalAlignment="Left" Margin="160,259,0,0" Text="MinTemp" TextWrapping="Wrap" VerticalAlignment="Top" Width="67" FontFamily="Consolas" Background="#FFE5E5E5" BorderThickness="0,0,0,0" BorderBrush="#FFACACAC" FontSize="11" Height="14"/>
-        <TextBox x:Name="raycast_depth_step_textbox" HorizontalAlignment="Left" Margin="160,210,0,0" Text="Depth" TextWrapping="Wrap" VerticalAlignment="Top" Width="67" FontFamily="Consolas" Background="#FFE5E5E5" BorderThickness="0,0,0,0" BorderBrush="#FFACACAC" FontSize="11" Height="14"/>
-        <TextBox x:Name="raycast_rays_textbox" HorizontalAlignment="Left" Margin="160,186,0,0" Text="Rays" TextWrapping="Wrap" VerticalAlignment="Top" Width="67" FontFamily="Consolas" Background="#FFE5E5E5" BorderThickness="0,0,0,0" BorderBrush="#FFACACAC" FontSize="11" Height="14"/>
+        <Label x:Name="min_temperature_label" Content="Min temperature:" HorizontalAlignment="Left" Margin="0,181,0,0" VerticalAlignment="Top" FontFamily="Consolas"/>
+        <Label x:Name="max_temperature_label" Content="Max temperature:" HorizontalAlignment="Left" Margin="0,205,0,0" VerticalAlignment="Top" FontFamily="Consolas"/>
+        <TextBox x:Name="max_temperature_textbox" HorizontalAlignment="Left" Margin="160,211,0,0" Text="MaxTemp" TextWrapping="Wrap" VerticalAlignment="Top" Width="67" FontFamily="Consolas" BorderThickness="0,0,0,0" BorderBrush="#FFACACAC" Background="#FFE5E5E5" FontSize="11" Height="13"/>
+        <TextBox x:Name="min_temperature_textbox" HorizontalAlignment="Left" Margin="160,186,0,0" Text="MinTemp" TextWrapping="Wrap" VerticalAlignment="Top" Width="67" FontFamily="Consolas" Background="#FFE5E5E5" BorderThickness="0,0,0,0" BorderBrush="#FFACACAC" FontSize="11" Height="14"/>
         <TextBox x:Name="stefan_boltzmann_const_textbox" HorizontalAlignment="Left" Margin="160,162,0,0" Text="Const" TextWrapping="Wrap" VerticalAlignment="Top" Width="67" FontFamily="Consolas" Background="#FFE5E5E5" BorderThickness="0,0,0,0" BorderBrush="#FFACACAC" FontSize="11" Height="14"/>
         <TextBox x:Name="gravity_acceleration_textbox" HorizontalAlignment="Left" Margin="160,138,0,0" Text="GravAccel" TextWrapping="Wrap" VerticalAlignment="Top" Width="67" FontFamily="Consolas" Background="#FFE5E5E5" BorderThickness="0,0,0,0" BorderBrush="#FFACACAC" FontSize="11" Height="14"/>
         <TextBox x:Name="start_acceleration_textbox" HorizontalAlignment="Left" Margin="160,114,0,0" Text="StartAccel" TextWrapping="Wrap" VerticalAlignment="Top" Width="67" FontFamily="Consolas" Background="#FFE5E5E5" BorderThickness="0,0,0,0" BorderBrush="#FFACACAC" FontSize="11" Height="14"/>

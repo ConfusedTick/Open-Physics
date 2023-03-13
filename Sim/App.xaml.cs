@@ -29,7 +29,7 @@ namespace Sim
             AppDomain.CurrentDomain.ProcessExit += new EventHandler(CurrentDomain_ProcessExit);
             File.Delete(Logger.SaveFile);
             Logger.Log("New session. Local time: " + DateTime.Now.ToString("h:mm:ss"), "System", '!', ConsoleColor.Magenta);
-            Core.InitializeGameStart(new Sim.Map.Size(80, 80));
+            Core.InitializeGameStart(new Sim.Map.Size(60, 60));
             //Thread th = new Thread(() => CreateWindow(Map));
             //th.SetApartmentState(ApartmentState.STA);
             //th.Start();

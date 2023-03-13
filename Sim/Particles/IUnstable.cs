@@ -15,7 +15,7 @@ namespace Sim.Particles
         public static bool RequireRandomTicks { get; }
         public static int RandomTicksRarity { get; }
 
-        // ParticleBase RandomTick() does not have any realization
+        // ParticleBase RandomTick() does not have any default realization
         public void RandomTick();
 
     }

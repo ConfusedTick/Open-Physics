@@ -15,7 +15,7 @@ namespace Sim.Particles
 
         public new const int Id = (int)ParticleIds.HYDROGEN;
         public new const string Name = "Hydrogen";
-        public new readonly Size Size = Size.DefaultSize;
+        public new readonly Size Size = Size.GetDefaultSize();
         
         public new const double Mass = 1d;
         public new const AggregationStates CurrentState = AggregationStates.Gas;
@@ -44,7 +44,7 @@ namespace Sim.Particles
             { AggregationStates.Gas, "Hydrogen" },
         };
 
-        public Hydrogen(MapBase map, Vector2 position, Flags parameters) : base(map, Id, Name, position, Colors.Blue, parameters, Size.DefaultSize, Mass, CurrentState, Temperature, EmittingCoeff, AcceptanceCoeff, HeatCapacity, MeltingPoint, MeltingHeat, EvaporationPoint, EvaporationHeat, RequireRandomTick)
+        public Hydrogen(MapBase map, Vector2 position, Flags parameters) : base(map, Id, Name, position, Colors.Blue, parameters, Size.GetDefaultSize(), Mass, CurrentState, Temperature, EmittingCoeff, AcceptanceCoeff, HeatCapacity, MeltingPoint, MeltingHeat, EvaporationPoint, EvaporationHeat, RequireRandomTick)
         {
         }
 

@@ -4,6 +4,7 @@ using System.Linq;
 using Sim.Map;
 using Sim.Simulation;
 using Sim.Particles.ParticlesList;
+using Sim.Particles.ParticlesList.Instruments;
 
 namespace Sim.Particles
 {
@@ -43,6 +44,7 @@ namespace Sim.Particles
             RegisterParticle(typeof(AlphaParticle));
             RegisterParticle(typeof(Hydrogen));
             RegisterParticle(typeof(Water));
+            RegisterParticle(typeof(HeatSouceParticle));
             Initialized = true;
         }
 
@@ -132,6 +134,19 @@ namespace Sim.Particles
             return particle;
         }
 
+        public ParticleBase AddNewInstrument(int id, ParticleBase target, Flags flags, double affect)
+        {
+            if (!Particles.ContainsKey(id))
+            {
+                Logger.Exception(new InvalidOperationException("Instrument with id " + id + " is not registered in the ParticleFactory"));
+                return null;
+            }
+            
+            ParticleBase inst = CreateInstrument(id, target, flags, affect);
+            Map.AddInstrument(inst);
+            return inst;
+        }
+
         public ParticleBase AddNewParticle(ParticleIds id, double x, double y, Flags flags)
         {
             return AddNewParticle((int)id, x, y, flags);
@@ -154,6 +169,25 @@ namespace Sim.Particles
             ParticleBase particle = (ParticleBase)Activator.CreateInstance(Particles[id], new object[] { Map, position, Flags.Empty });
             if (particle != null) particle.InitPosition();
             return particle;
+        }
+
+        
+        public ParticleBase CreateInstrument(int id, ParticleBase target, Flags flags, double affect)
+        {
+            if (!Particles.ContainsKey(id))
+            {
+                Logger.Exception(new InvalidOperationException("Particle with id " + id + " is not registered in the ParticleFactory"));
+                return null;
+            }
+            
+            ParticleBase instrument = (ParticleBase)Activator.CreateInstance(Particles[id], new object[] { Map, target.Position, flags, affect, target});
+            return instrument;
+        }
+        
+
+        public ParticleBase CreateInstrument(ParticleIds id, ParticleBase target, Flags flags, double affect)
+        {
+            return CreateInstrument((int)id, target, flags, affect);
         }
 
         public ParticleBase CreateParticle(ParticleIds id, Vector2 position, Flags flags)

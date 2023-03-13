@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using System.Windows.Threading;
 using Sim.Particles;
+using Sim.Particles.ParticlesList.Instruments;
 using Sim.Simulation;
 using Sim.Enums;
 using Sim.Events;
@@ -22,6 +23,11 @@ namespace Sim.Map
         /// Все частицы карты
         /// </summary>
         public readonly List<ParticleBase> Particles = new List<ParticleBase> { };
+
+        /// <summary>
+        /// Все инструменты частицы
+        /// </summary>
+        public readonly List<ParticleBase> Instruments = new List<ParticleBase> { };
 
         /// <summary>
         /// Словарь всех частиц карты (ключ - Uid)
@@ -57,6 +63,10 @@ namespace Sim.Map
 
         public EventHandler ParticleAdded;
 
+        public TpsCounter TpsCounter;
+
+        public double Performance = 1d;
+
 
         public MapBase(Size size, Physic physic)
         {
@@ -67,7 +77,17 @@ namespace Sim.Map
             // fffffff - time in MICROseconds to be more random
             Ticker.Tick += Tick;
             Ticker.Interval = TimeSpan.FromSeconds(physic.DeltaTime);
+
+            TpsCounter = new TpsCounter(Ticker); 
+            TpsCounter.CoefficientUpdated += TpsUpdated; 
+
             if (!ParticleFactory.Initialized) ParticleFactory.Initialize();
+        }
+
+
+        public void TpsUpdated(object sender, EventArgs args)
+        {
+            Performance = ((TpsCounterCoefficientUpdated)args).TpsCoefficient;
         }
 
         /// <summary>
@@ -133,6 +153,20 @@ namespace Sim.Map
             }
         }
 
+        public void AddInstrument(ParticleBase instrument)
+        {
+            if (!ParticleFactory.Particles.ContainsKey(instrument.Id))
+            {
+                Logger.Log(" with " + instrument.Id + " is not registered in particle factory.");
+                return;
+            }
+            if (!Instruments.Contains(instrument) && IsAllowedPosition(instrument.Position))
+            {
+                Instruments.Add(instrument);
+                instrument.Initialize();
+            }
+        }
+
         /// <summary>
         /// Удаляет частицу 
         /// </summary>
@@ -193,9 +227,21 @@ namespace Sim.Map
                 part.Position.Y < y && part.Position.Y + part.Size.Height > y);
         }
 
+        public static ParticleBase IsInParticleArea(double x, double y, List<ParticleBase> list)
+        {
+            return list.Find(part => part.Position.X < x && part.Position.X + part.Size.Width > x &&
+                part.Position.Y < y && part.Position.Y + part.Size.Height > y);
+        }
+
         public List<ParticleBase> IsInParticleAreaAll(double x, double y)
         {
             return Particles.FindAll(part => part.Position.X < x && (double)(part.Position.X + part.Size.Width) > x &&
+                part.Position.Y < y && (double)(part.Position.Y + part.Size.Height) > y);
+        }
+
+        public static List<ParticleBase> IsInParticleAreaAll(double x, double y, List<ParticleBase> list)
+        {
+            return list.FindAll(part => part.Position.X < x && (double)(part.Position.X + part.Size.Width) > x &&
                 part.Position.Y < y && (double)(part.Position.Y + part.Size.Height) > y);
         }
 
@@ -233,6 +279,13 @@ namespace Sim.Map
                 **/
                 if (particle.RequireRandomTick) if (Random.Next(0, particle.RandomTickRarity) == 1) particle.RandomTick();
             }
+            
+            foreach(ParticleBase instrument in Instruments.ToList())
+            {
+                ((IInstrument)instrument).AffectionTick();
+                if (instrument.RequireRandomTick) if (Random.Next(0, instrument.RandomTickRarity) == 1) instrument.RandomTick();
+            }
+            
             TickId++;
         }
 
@@ -257,6 +310,8 @@ namespace Sim.Map
         public void Save(string savefile)
         {
             using BinaryWriter writer = new BinaryWriter(new FileStream(savefile, FileMode.OpenOrCreate));
+            List<ParticleBase> all = Particles.ToList();
+            all.AddRange(Instruments);
             // Open physics map format
             writer.Write("OPMF");
 
@@ -264,7 +319,7 @@ namespace Sim.Map
             writer.Write((int)Size.Height);
             Vector2 pos;
 
-            foreach (ParticleBase particle in Particles)
+            foreach (ParticleBase particle in all)
             {
                 pos = particle.Position;
                 // Vector2 data
@@ -274,6 +329,15 @@ namespace Sim.Map
                 writer.Write(pos.Acceleration);
 
                 // Particle data
+                if (particle.IsInstrument())
+                {
+                    writer.Write(true);
+                    writer.Write((double)(((IInstrument)particle).Affection));
+                }
+                else
+                {
+                    writer.Write(false);
+                }
                 writer.Write(particle.Id);
                 writer.Write(particle.Fixed);
                 writer.Write(particle.Temperature);
@@ -296,7 +360,7 @@ namespace Sim.Map
                 if (reader.ReadString() != "OPMF")
                 {
                     Logger.Exception(new FormatException("Invalid map file format."));
-                    Logger.Log("Exception while loading map from " + file, "Physics", '!', ConsoleColor.Red);
+                    Logger.Log("Exception while loading map from " + file, "Map", '!', ConsoleColor.Red);
                     Logger.Log("This can lead to major malfunctions. Application will be closed.", textColor: ConsoleColor.Red);
                     Environment.Exit(100);
                     return null;
@@ -308,7 +372,8 @@ namespace Sim.Map
                 while (reader.BaseStream.Position != reader.BaseStream.Length)
                 {
                     pos = new Vector2(x: reader.ReadDouble(), y: reader.ReadDouble(), angle: reader.ReadInt32(), acceleration: reader.ReadDouble());
-                    particle = factory.CreateParticle(id: reader.ReadInt32(), pos, flags: Flags.Empty);
+                    if (!reader.ReadBoolean()) particle = factory.CreateParticle(id: reader.ReadInt32(), pos, flags: Flags.Empty);
+                    else particle = factory.CreateInstrument(id: reader.ReadInt32(), add.Find(p => p.Position.X == pos.X && p.Position.Y == pos.Y), Flags.Empty, affect: reader.ReadDouble());
                     if (particle == null)
                     {
                         Logger.Exception(new FormatException("Can not create particle, while loading new map, skipping particle initialization"));
@@ -323,7 +388,11 @@ namespace Sim.Map
                     add.Add(particle);
                 }
             }
-            add.ForEach(part => map.AddParticle(part));
+            foreach(ParticleBase pt in add)
+            {
+                if (pt.IsInstrument()) map.AddInstrument(pt);
+                else map.AddParticle(pt);
+            }
             return map;
         }
     }

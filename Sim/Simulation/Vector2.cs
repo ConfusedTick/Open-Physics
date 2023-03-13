@@ -16,7 +16,7 @@ namespace Sim.Simulation
     /// Советую просто использовать и не думать как это работает
     /// </summary>
 
-    public struct Vector2
+    public class Vector2
     {
 
         public ParticleBase Particle { get; set; }
@@ -80,6 +80,13 @@ namespace Sim.Simulation
 
         public Size Size;
 
+        public Vector2(double x, double y)
+        {
+            X = x;
+            Y = y;
+            PermanentForces = new List<Force>();
+        }
+
         public Vector2(double x, double y, int angle = 0, double mass = 0d, double speed = 0d, double acceleration = 0d, double force = 0d, double sizeX = 0d, double sizeY = 0d, bool isFixed = false, ParticleBase particle = null)
         {
             UpdateOnNextTick = false;
@@ -114,6 +121,7 @@ namespace Sim.Simulation
         /// <returns>Требуется лм визуальное обновление на этом тике</returns>
         public bool Tick()
         {
+            
             NetForce = 0d;
             if (Fixed) return false;
             UpdateOnNextTick = false;
@@ -166,7 +174,6 @@ namespace Sim.Simulation
             int A = Angle + (int)Trigonometrics.RadToDeg(Math.Atan((double)((double)(force * (double)Trigonometrics.DSin(betweenAngle)) / (double)(NetForce + (double)(force * (double)Trigonometrics.DCos(betweenAngle))))));
             SetAngle(A);
             SetForce(F);
-
         }
 
         public void SetXForced(double newX)

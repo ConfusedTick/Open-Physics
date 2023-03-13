@@ -43,5 +43,8 @@ namespace Sim.Particles
         ALLIMINIUM = 7,
 
 
+        // Instruments (IInstruments)
+        HEATSOURCE = -255,
+        HEAT_SOURCE = -255,
     }
 }

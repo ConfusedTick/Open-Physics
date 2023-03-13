@@ -24,6 +24,7 @@ using Sim.Simulation;
 using Sim.Events;
 using Sim;
 using Microsoft.Win32;
+using Sim.Utils;
 
 namespace Sim.GUI
 {
@@ -37,9 +38,10 @@ namespace Sim.GUI
 
         // Key equals to particle uid.
         public Dictionary<int, Rectangle> ParticlesRectangles { get; private set; } = new Dictionary<int, Rectangle>();
+        public List<Rectangle> Dots = new List<Rectangle>();
 
         // Full size of particle label
-        public double SizeMult { get; private set; } = 10.9d;
+        public double SizeMult { get; private set; } = 14.9d;
 
         // Current particle to place
         public int CurrentParticle { get; private set; } = (int)ParticleIds.WATER;
@@ -58,6 +60,8 @@ namespace Sim.GUI
         private readonly Button _newPageButton;
         private readonly Button _pickUpMapSaveButton;
         private readonly Button _saveMapButton;
+
+        private GradientStopCollection TemperatureGradientStops;
 
         private ParticleBase _watching;
         private readonly DispatcherTimer _watchingUpdater;
@@ -88,8 +92,10 @@ namespace Sim.GUI
         private const double SizeAddDeviationMult = 0.75d;
         // Indicates stack panel image border in GenerateStackPanel function
         private const double ImageBorderThickness = -0.5d;
+        // Temperature gradient stroke thickness
+        private const double RectangleStrokeThickness = 3;
         // Indicates visual info label update interval between ticks
-        private const int WatchingUpdaterInterval = 250;
+        private const int WatchingUpdaterInterval = 75;
 
         private const string WindowTitle = "Open Physics - Demo 1P";
 
@@ -217,7 +223,15 @@ namespace Sim.GUI
             Closed += CloseMainWindow;
             main_canvas.MouseRightButtonDown += PlaceParticle;
 
-            
+            TemperatureGradientStops = new GradientStopCollection
+            {
+                new GradientStop(Colors.Cyan, 0),
+                new GradientStop(Colors.LightCyan, .07),
+                new GradientStop(Colors.Gray, .1),
+                new GradientStop(Colors.Red, .75),
+                new GradientStop(Colors.Yellow, 1),
+            };
+
             LoadMap();
 
             Logger.Log("Window ready", "MainWindow", '!', ConsoleColor.Green);
@@ -321,10 +335,25 @@ namespace Sim.GUI
             rectangle.MouseEnter += MouseHoverOn;
             rectangle.MouseLeave += MouseHoverOff;
             rectangle.MouseLeftButtonDown += ParticleRectangleMouseClick;
+            rectangle.StrokeThickness = RectangleStrokeThickness;
             part.ParticlePositionChanged += UpdateParticle;
             part.ParticleRemoved += RemoveParticle;
             ParticlesRectangles.Add(part.Uid, rectangle);
             _ = main_canvas.Children.Add(rectangle);
+            UpdateHeatColor(part);
+        }
+
+        private void UpdateHeatColor(ParticleBase part)
+        {
+            Rectangle rectangle = ParticlesRectangles[part.Uid];
+            if (rectangle == null)
+            {
+                return;
+            }
+
+            double gradientCoeff = (Math.Abs(Map.Physics.MinTemperature) + part.Temperature) / Map.Physics.TemperatureDelta;
+            
+            rectangle.Fill = new SolidColorBrush(TemperatureGradientStops.GetRelativeColor(gradientCoeff));
         }
 
         private void UpdateParticle(object sender, EventArgs e)
@@ -332,6 +361,8 @@ namespace Sim.GUI
             ParticleBase part = (ParticleBase)sender;
 
             Vector2 Position = part.Position;
+
+            UpdateHeatColor(part);
             if (Math.Round(Position.PreviousX, Map.Physics.Smoothness) == Math.Round(Position.X, Map.Physics.Smoothness) && Math.Round(Position.PreviousY, Map.Physics.Smoothness) == Math.Round(Position.Y, Map.Physics.Smoothness) && part.PreviousState == part.CurrentState)
             {
                 return;
@@ -342,7 +373,7 @@ namespace Sim.GUI
             {
                 return;
             }
-            rectangle.Fill = new SolidColorBrush(part.Color);
+            //rectangle.Fill = new SolidColorBrush(part.Color);
 
             _ = rectangle.Dispatcher.BeginInvoke(() => Canvas.SetLeft(rectangle, Math.Round(Position.X * SizeMult + 3 * Size, Map.Physics.Smoothness, MidpointRounding.ToEven)));
             _ = rectangle.Dispatcher.BeginInvoke(() => Canvas.SetBottom(rectangle, Math.Round(Position.Y * SizeMult, Map.Physics.Smoothness, MidpointRounding.ToEven)));
@@ -362,10 +393,7 @@ namespace Sim.GUI
             rectangle.MouseLeftButtonDown -= ParticleRectangleMouseClick;
             if (rectangle.IsMouseOver) _infoLabel.Content = "";
             main_canvas.Children.Remove(rectangle);
-            if (!ParticlesRectangles.Remove(part.Uid))
-            {
-                Logger.Log("Deletion process interrupted. Collection changed in action.");
-            }
+            ParticlesRectangles.Remove(part.Uid);
             if (IsOpenedParticleSettings && _particleSettingsWindow.Particle == part) _particleSettingsWindow.Close();
         }
 
@@ -462,12 +490,36 @@ namespace Sim.GUI
                 rectangle.MouseEnter += MouseHoverOn;
                 rectangle.MouseLeave += MouseHoverOff;
                 rectangle.MouseLeftButtonDown += ParticleRectangleMouseClick;
+                rectangle.StrokeThickness = RectangleStrokeThickness;
                 part.ParticlePositionChanged += UpdateParticle;
                 part.ParticleRemoved += RemoveParticle;
                 ParticlesRectangles.Add(part.Uid, rectangle);
                 _ = main_canvas.Children.Add(rectangle);
+                UpdateHeatColor(part);
             }
             Logger.Log("Map loaded", "MainWindow");
+        }
+        
+        public double MapXToWindowX(double x)
+        {
+            return x * SizeMult + 3 * Size;
+        }
+
+        public double MapYToWindowY(double y)
+        {
+            return y * SizeMult;
+        }
+
+        public void Dot(double x, double y)
+        {
+            Rectangle dot = new Rectangle();
+            dot.Height = .9d;
+            dot.Width = .9d;
+            dot.Fill = new SolidColorBrush(Colors.White);
+            Canvas.SetLeft(dot, MapXToWindowX(x));
+            Canvas.SetBottom(dot, MapYToWindowY(y));
+            main_canvas.Children.Add(dot);
+            Dots.Add(dot);
         }
 
         private void PlaceParticle(object sender, MouseButtonEventArgs e)
@@ -542,7 +594,7 @@ namespace Sim.GUI
             }
             Map.Particles.ForEach(part => part.ParticlePositionChanged -= UpdateParticle);
             Map.Particles.ForEach(part => part.ParticleRemoved -= RemoveParticle);
-            Logger.Log("Window events unsubscribed.", "MainWindow");
+            Logger.Log("Window events unsubscribed", "MainWindow");
         }
 
         private void OpenSettings(object sender, EventArgs e)
@@ -603,6 +655,13 @@ namespace Sim.GUI
 
         public void UpdateGlobalInfo()
         {
+            Map.Particles.ForEach(part => UpdateHeatColor(part));
+            foreach(Rectangle rect in Dots)
+            {
+                main_canvas.Children.Remove(rect);
+            }
+            Dots.Clear();
+
             _pausedLabel.Visibility = Map.IsTicking ? Visibility.Hidden : Visibility.Visible;
 
             if (!_showSettings)
@@ -619,13 +678,12 @@ namespace Sim.GUI
                 + "\nSPT=" + Map.Physics.DeltaTime
                 + "\nSA=" + Map.Physics.StartAcceleration
                 + "\nS=" + Map.Physics.Smoothness
-                + "\nHR=" + Map.Physics.HeatRender
                 + "\nSBC=" + Map.Physics.StefanBoltzmannConst
                 + "\nCDS=" + Map.Physics.CasterDepthStep
-                + "\nRRN=" + Map.Physics.RaycastRayNumbers
                 + "\nMiT=" + Map.Physics.MinTemperature
                 + "\nMaT=" + Map.Physics.MaxTemperature
-                + "\nParC=" + Map.Particles.Count;
+                + "\nParC=" + Map.Particles.Count
+                + "\nPerf=" + Math.Round(Map.Performance * 100) + "%";
         }
 
         private void WindowUpdate(object sender, EventArgs e)
@@ -640,6 +698,7 @@ namespace Sim.GUI
 
         private void UpdateWatchingParticleInfo(object sender, EventArgs e)
         {
+            
             UpdateGlobalInfo();
             if (_watching == null)
             {
@@ -656,7 +715,7 @@ namespace Sim.GUI
                     "\nSize=" + particle.Size +
                     "\nSpeed=" + Math.Round(particle.Position.Speed, Map.Physics.Smoothness) + " M/T" +
                     "\nTemp=" + Math.Round(particle.Temperature, Map.Physics.Smoothness) + " C" +
-                    "\nEmittingCoeff=" + Math.Round(particle.EmittingCoeff, Map.Physics.Smoothness) +
+                    "\nEmittingCoeff=" + Math.Round(particle.EmmitingCoeff, Map.Physics.Smoothness) +
                     "\nAcceptanceCoeff=" + Math.Round(particle.AcceptanceCoeff, Map.Physics.Smoothness) +
                     "\nHeatCapacity=" + Math.Round(particle.HeatCapacity, Map.Physics.Smoothness) + " J/KG * C" +
                     "\nHalfLenght=" + Math.Round(particle.halfLenght, Map.Physics.Smoothness) + " M" +
