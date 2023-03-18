@@ -52,7 +52,7 @@ namespace Sim.Particles
         /// <summary>
         /// Позиция частицы
         /// </summary>
-        public Vector2 Position;
+        public ParticlePositionParameters Position;
 
         /// <summary>
         /// Количество тиков, которое прожила частица
@@ -187,7 +187,7 @@ namespace Sim.Particles
         public event EventHandler ParticleCollided;
 
 
-        protected ParticleBase(Map.MapBase map, int id, string name, Vector2 position, Color color, Flags parameters, Size size, double mass, AggregationStates startState, double startTemperature, double emittingCoeff, double acceptanceCoeff, double heatCapacity, double meltingPoint, double meltingHeat, double evaporationPoint, double evaporationHeat, bool requireRandomTicks)
+        protected ParticleBase(Map.MapBase map, int id, string name, ParticlePositionParameters position, Color color, Flags parameters, Size size, double mass, AggregationStates startState, double startTemperature, double emittingCoeff, double acceptanceCoeff, double heatCapacity, double meltingPoint, double meltingHeat, double evaporationPoint, double evaporationHeat, bool requireRandomTicks)
         {
             Uid = LastUid + 1;
             LastUid += 1;
@@ -531,7 +531,7 @@ namespace Sim.Particles
         /// <param name="y">Позиция y</param>
         public virtual void InitPosition(double x, double y)
         {
-            Position = new Vector2(x, y, particle: this, sizeX: Map.Size.Width, sizeY: Map.Size.Height, mass: Mass, angle: Map.Physics.GravityVectorAngle, acceleration: Map.Physics.StartAcceleration);
+            Position = new ParticlePositionParameters(x, y, particle: this, sizeX: Map.Size.Width, sizeY: Map.Size.Height, mass: Mass, angle: Map.Physics.GravityVectorAngle, acceleration: Map.Physics.StartAcceleration);
             _ = Position.RecalculateWeight();
             Position.Initialize();
         }
@@ -576,10 +576,10 @@ namespace Sim.Particles
 
             foreach (ParticleBase pt in collisions.Keys)
             {
-                if (collisions[pt] < Size.GetDefaultSize().Width)
+                if (collisions[pt] <= Size.GetDefaultSize().Width)
                 {
-                    CollideWith(pt);
-                    pt.CollideWith(this);
+                    CollideWith(pt, collisions[pt]);
+                    pt.CollideWith(this, collisions[pt]);
                 }
             }
 
@@ -598,9 +598,9 @@ namespace Sim.Particles
         /// Столкновение двух частиц
         /// </summary>
         /// <param name="particle">Вторая столкнившаяся частица</param>
-        public virtual void CollideWith(ParticleBase particle)
+        public virtual void CollideWith(ParticleBase particle, double distance)
         {
-            Position.CollideWith(particle.Position);
+            Position.CollideWith(particle.Position, distance);
             ParticleCollided?.Invoke(this, new ParticleCollidedEventArgs(this, particle));
         }
     }

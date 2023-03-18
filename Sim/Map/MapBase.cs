@@ -250,7 +250,7 @@ namespace Sim.Map
             return x <= Size.Width && x >= 0d && y <= Size.Height && y >= 0d;
         }
 
-        public bool IsAllowedPosition(Vector2 vec)
+        public bool IsAllowedPosition(ParticlePositionParameters vec)
         {
             return vec.X <= Size.Width && vec.X >= 0d && vec.Y <= Size.Height && vec.Y >= 0d;
         }
@@ -262,30 +262,31 @@ namespace Sim.Map
 
         public bool IsTouchingEachOthers(ParticleBase part1, ParticleBase part2)
         {
-            Vector2 pos1 = part1.Position;
-            Vector2 pos2 = part2.Position;
+            ParticlePositionParameters pos1 = part1.Position;
+            ParticlePositionParameters pos2 = part2.Position;
             return ((double)pos2.X >= (double)pos1.X) && ((double)pos2.X <= (double)((double)pos1.X + part1.Size.Width)) && ((double)pos2.Y >= (double)pos1.Y) && ((double)pos2.Y <= (double)((double)pos1.Y + part1.Size.Height)); 
 
         }
         public void Tick(object sender, EventArgs e)
         {
-            foreach (ParticleBase particle in Particles.ToList())
+            ParticleBase particle;
+            
+            for (int i = 0; i < Particles.Count; i++)
             {
-
+                particle = Particles[i];
                 particle.Tick();
-                /**
-                List<ParticleBase> touching = Particles.FindAll(part => part.Position == particle.Position && (part != particle));
-                touching.ForEach(touchingParticle => particle.CollideWith(touchingParticle));
-                **/
                 if (particle.RequireRandomTick) if (Random.Next(0, particle.RandomTickRarity) == 1) particle.RandomTick();
             }
-            
-            foreach(ParticleBase instrument in Instruments.ToList())
+
+            ParticleBase instrument;
+
+            for (int i = 0; i < Instruments.Count; i++)
             {
+                instrument = Instruments[i];
                 ((IInstrument)instrument).AffectionTick();
                 if (instrument.RequireRandomTick) if (Random.Next(0, instrument.RandomTickRarity) == 1) instrument.RandomTick();
             }
-            
+
             TickId++;
         }
 
@@ -317,7 +318,7 @@ namespace Sim.Map
 
             writer.Write((int)Size.Width);
             writer.Write((int)Size.Height);
-            Vector2 pos;
+            ParticlePositionParameters pos;
 
             foreach (ParticleBase particle in all)
             {
@@ -331,12 +332,12 @@ namespace Sim.Map
                 // Particle data
                 if (particle.IsInstrument())
                 {
-                    writer.Write(true);
+                    writer.Write((byte)(1));
                     writer.Write((double)(((IInstrument)particle).Affection));
                 }
                 else
                 {
-                    writer.Write(false);
+                    writer.Write((byte)(0));
                 }
                 writer.Write(particle.Id);
                 writer.Write(particle.Fixed);
@@ -354,7 +355,10 @@ namespace Sim.Map
             List<ParticleBase> add = new List<ParticleBase>();
             ParticleFactory factory;
             ParticleBase particle;
-            Vector2 pos;
+            ParticlePositionParameters pos;
+            byte isInstrument;
+            int id;
+            double affect;
             using (BinaryReader reader = new BinaryReader(new FileStream(file, FileMode.OpenOrCreate)))
             {
                 if (reader.ReadString() != "OPMF")
@@ -371,9 +375,21 @@ namespace Sim.Map
                 factory = ParticleFactory.GetFactory(map);
                 while (reader.BaseStream.Position != reader.BaseStream.Length)
                 {
-                    pos = new Vector2(x: reader.ReadDouble(), y: reader.ReadDouble(), angle: reader.ReadInt32(), acceleration: reader.ReadDouble());
-                    if (!reader.ReadBoolean()) particle = factory.CreateParticle(id: reader.ReadInt32(), pos, flags: Flags.Empty);
-                    else particle = factory.CreateInstrument(id: reader.ReadInt32(), add.Find(p => p.Position.X == pos.X && p.Position.Y == pos.Y), Flags.Empty, affect: reader.ReadDouble());
+                    pos = new ParticlePositionParameters(x: reader.ReadDouble(), y: reader.ReadDouble(), angle: reader.ReadInt32(), acceleration: reader.ReadDouble());
+                    isInstrument = reader.ReadByte();
+                    
+                    
+                    if (isInstrument == 0)
+                    {
+                        id = reader.ReadInt32();
+                        particle = factory.CreateParticle(id: id, pos, flags: Flags.Empty);
+                    }
+                    else
+                    {
+                        affect = reader.ReadDouble();
+                        id = reader.ReadInt32();
+                        particle = factory.CreateInstrument(id: id, add.Find(p => p.Position.X == pos.X && p.Position.Y == pos.Y), Flags.Empty, affect: affect);
+                    }
                     if (particle == null)
                     {
                         Logger.Exception(new FormatException("Can not create particle, while loading new map, skipping particle initialization"));

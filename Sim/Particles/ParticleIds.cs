@@ -44,7 +44,7 @@ namespace Sim.Particles
 
 
         // Instruments (IInstruments)
-        HEATSOURCE = -255,
-        HEAT_SOURCE = -255,
+        HEATSOURCE = 55,
+        HEAT_SOURCE = 55,
     }
 }

@@ -37,6 +37,7 @@
 
   <ItemGroup>
     <PackageReference Include="OpenTK" Version="4.7.5" />
+    <PackageReference Include="SFML.Net" Version="2.5.0" />
   </ItemGroup>
 
   <ItemGroup>

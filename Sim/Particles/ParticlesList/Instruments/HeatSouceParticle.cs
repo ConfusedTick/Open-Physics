@@ -34,7 +34,7 @@ namespace Sim.Particles.ParticlesList.Instruments
 
         double IInstrument.Affection => Affection;
 
-        public HeatSouceParticle(MapBase map, Vector2 position, Flags parameters, double heatFlux, ParticleBase affp = null) : base(map, Id, Name, position, Colors.White, parameters, Size.GetDefaultSize(), Mass, CurrentState, Temperature, EmittingCoeff, AcceptanceCoeff, HeatCapacity, MeltingPoint, MeltingHeat, EvaporationPoint, EvaporationHeat, RequireRandomTick)
+        public HeatSouceParticle(MapBase map, ParticlePositionParameters position, Flags parameters, double heatFlux, ParticleBase affp = null) : base(map, Id, Name, position, Colors.White, parameters, Size.GetDefaultSize(), Mass, CurrentState, Temperature, EmittingCoeff, AcceptanceCoeff, HeatCapacity, MeltingPoint, MeltingHeat, EvaporationPoint, EvaporationHeat, RequireRandomTick)
         {
             AffectedParticle = affp;
             Affection = heatFlux;

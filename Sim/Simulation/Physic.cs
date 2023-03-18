@@ -179,8 +179,6 @@ namespace Sim.Simulation
                 File.AppendAllText(filename, "#Not used in RT render.\n");
                 File.AppendAllText(filename, "#Ray caster depth step. Bigger value - less lags, but less accuracy.\n");
                 File.AppendAllText(filename, "casterdepthstep=" + CasterDepthStep + "\n");
-                File.AppendAllText(filename, "#Heat radiation render: Ray Tracing(RT), Ray Casting(RC), Lazy Ray Tracing (LRT), None(NONE)\n");
-                File.AppendAllText(filename, "#RT faster then RC, NONE is the fastest, just no heat render. LRT will be even used if NONE, only for collision detection \n");
                 File.AppendAllText(filename, "MinTemperature=" + MinTemperature.ToString() + "\n");
                 File.AppendAllText(filename, "MaxTemperature=" + MaxTemperature.ToString() + "\n");
                 Logger.Log("Physics parameters saved to " + filename, "Physics");

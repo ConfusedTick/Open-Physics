@@ -31,7 +31,7 @@ namespace Sim.Particles.ParticlesList
         public new const bool RequireRandomTick = true;
         public new const int RandomTickRarity = 100;
 
-        public AlphaParticle(MapBase map, Vector2 position, Flags parameters) : base(map, Id, Name, position, Colors.White, parameters, Size.GetDefaultSize(), Mass, CurrentState, Temperature, EmittingCoeff, AcceptanceCoeff, HeatCapacity, MeltingPoint, MeltingHeat, EvaporationPoint, EvaporationHeat, RequireRandomTick)
+        public AlphaParticle(MapBase map, ParticlePositionParameters position, Flags parameters) : base(map, Id, Name, position, Colors.White, parameters, Size.GetDefaultSize(), Mass, CurrentState, Temperature, EmittingCoeff, AcceptanceCoeff, HeatCapacity, MeltingPoint, MeltingHeat, EvaporationPoint, EvaporationHeat, RequireRandomTick)
         {
         }
 
@@ -50,7 +50,7 @@ namespace Sim.Particles.ParticlesList
             base.Remove();
         }
 
-        public override void CollideWith(ParticleBase particle)
+        public override void CollideWith(ParticleBase particle, double distance)
         {
             
             if (particle.Mass > 2) base.Remove();

@@ -13,9 +13,9 @@ namespace Sim.Simulation
         public double Acceleration;
         public double Speed { get; protected set; }
 
-        public Vector2 Vector;
+        public ParticlePositionParameters Vector;
 
-        public Force(int angle, double force, Vector2 vector)
+        public Force(int angle, double force, ParticlePositionParameters vector)
         {
             NetForce = force;
             Angle = angle;

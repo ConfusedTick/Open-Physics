@@ -46,6 +46,10 @@ namespace Sim.GUI
         // Current particle to place
         public int CurrentParticle { get; private set; } = (int)ParticleIds.WATER;
 
+        public double Affection { get; private set; } = 0d;
+
+        public bool HeatDisplay { get; private set; } = true;
+
         // Size of label with particle itself
         public double Size { get; private set; }
 
@@ -97,7 +101,7 @@ namespace Sim.GUI
         // Indicates visual info label update interval between ticks
         private const int WatchingUpdaterInterval = 75;
 
-        private const string WindowTitle = "Open Physics - Demo 1P";
+        private const string WindowTitle = "Open Physics - Demo HR2Pr";
 
         public MainWindow(MapBase map)
         {
@@ -345,9 +349,16 @@ namespace Sim.GUI
 
         private void UpdateHeatColor(ParticleBase part)
         {
+            
             Rectangle rectangle = ParticlesRectangles[part.Uid];
             if (rectangle == null)
             {
+                return;
+            }
+
+            if (!HeatDisplay)
+            {
+                rectangle.Fill = new SolidColorBrush(part.Color);
                 return;
             }
 
@@ -360,7 +371,7 @@ namespace Sim.GUI
         {
             ParticleBase part = (ParticleBase)sender;
 
-            Vector2 Position = part.Position;
+            ParticlePositionParameters Position = part.Position;
 
             UpdateHeatColor(part);
             if (Math.Round(Position.PreviousX, Map.Physics.Smoothness) == Math.Round(Position.X, Map.Physics.Smoothness) && Math.Round(Position.PreviousY, Map.Physics.Smoothness) == Math.Round(Position.Y, Map.Physics.Smoothness) && part.PreviousState == part.CurrentState)
@@ -532,7 +543,7 @@ namespace Sim.GUI
             double mx = x / SizeMult;
             double my = y / SizeMult;
 
-            if (Map.IsInParticleArea(mx, my) == null) ParticleFactory.GetFactory(Map).AddNewParticle(CurrentParticle, Math.Round(mx, MidpointRounding.AwayFromZero), Math.Round(my, MidpointRounding.AwayFromZero), Flags.Empty);
+            if (Map.IsInParticleArea(mx, my) == null) ParticleFactory.GetFactory(Map).AddNew(CurrentParticle, Math.Round(mx, MidpointRounding.AwayFromZero), Math.Round(my, MidpointRounding.AwayFromZero), Flags.Empty, Affection);
         }
 
         private void ParticleRectangleMouseClick(object sender, MouseButtonEventArgs e)

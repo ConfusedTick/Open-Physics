@@ -16,6 +16,7 @@ namespace Sim.Particles
         public Map.MapBase Map { get; protected set; }
 
         public static Dictionary<int, Type> Particles = new Dictionary<int, Type>() { };
+        public static List<int> InstrumentsIds = new List<int>() { };
         public static Dictionary<MapBase, ParticleFactory> Factories = new Dictionary<MapBase, ParticleFactory>() { };
         public static bool Initialized = false;
 
@@ -44,7 +45,7 @@ namespace Sim.Particles
             RegisterParticle(typeof(AlphaParticle));
             RegisterParticle(typeof(Hydrogen));
             RegisterParticle(typeof(Water));
-            RegisterParticle(typeof(HeatSouceParticle));
+            RegisterParticle(typeof(HeatSouceParticle), true);
             Initialized = true;
         }
 
@@ -53,7 +54,7 @@ namespace Sim.Particles
         /// </summary>
         /// <param name="id">Номер частицы</param>
         /// <param name="type">Класс частицы (должен наследовать ParticleBase)</param>
-        public static void RegisterParticle(int id, Type type)
+        public static void RegisterParticle(int id, Type type, bool isInst = false)
         {
             if (type.IsAssignableFrom(typeof(ParticleBase)))
             {
@@ -67,11 +68,12 @@ namespace Sim.Particles
             }
             Logger.Log("Registered particle with id " + id.ToString(), "ParticleFactoryRegisterParticle");
             Particles.Add(id, type);
+            if (isInst) InstrumentsIds.Add(id);
         }
 
-        public static void RegisterParticle(Type type)
+        public static void RegisterParticle(Type type, bool isInst = false)
         {
-            RegisterParticle((int)type.GetField("Id").GetValue(type), type);
+            RegisterParticle((int)type.GetField("Id").GetValue(type), type, isInst);
         }
 
         /// <summary>
@@ -102,14 +104,43 @@ namespace Sim.Particles
         /// <param name="position">Позиция</param>
         /// <param name="flags">Дефолтные флаги</param>
         /// <returns>Добавленная на карту частица</returns>
-        public ParticleBase AddNewParticle(int id, Vector2 position, Flags flags)
+        public ParticleBase AddNewParticle(int id, ParticlePositionParameters position, Flags flags)
         {
             ParticleBase particle = CreateParticle(id, position, flags);
             Map.AddParticle(particle);
             return particle;
         }
 
-        public ParticleBase AddNewParticle(ParticleIds id, Vector2 position, Flags flags)
+        public bool IsInstrument(int id)
+        {
+            return InstrumentsIds.Contains(id);
+        }
+
+        public ParticleBase AddNew(int id, double x, double y, Flags flags, double affection = 0d)
+        {
+            if (IsInstrument(id))
+            {
+                return AddNewInstrument(id, Map.IsInParticleArea(x, y), flags, affection);
+            }
+            else
+            {
+                return AddNewParticle(id, x, y, flags);
+            }
+        }
+
+        public ParticleBase AddNew(int id, ParticlePositionParameters position, Flags flags, double affection = 0d)
+        {
+            if (IsInstrument(id))
+            {
+                return AddNewInstrument(id, Map.IsInParticleArea(position.X, position.Y), flags, affection);
+            }
+            else
+            {
+                return AddNewParticle(id, position, flags);
+            }
+        }
+
+        public ParticleBase AddNewParticle(ParticleIds id, ParticlePositionParameters position, Flags flags)
         {
             return AddNewParticle((int)id, position, flags);
         }
@@ -159,7 +190,7 @@ namespace Sim.Particles
         /// <param name="position">Позиция</param>
         /// <param name="flags">Дефолтные флаги</param>
         /// <returns>Созданная частица</returns>
-        public ParticleBase CreateParticle(int id, Vector2 position, Flags flags)
+        public ParticleBase CreateParticle(int id, ParticlePositionParameters position, Flags flags)
         {
             if (!Particles.ContainsKey(id))
             {
@@ -190,7 +221,7 @@ namespace Sim.Particles
             return CreateInstrument((int)id, target, flags, affect);
         }
 
-        public ParticleBase CreateParticle(ParticleIds id, Vector2 position, Flags flags)
+        public ParticleBase CreateParticle(ParticleIds id, ParticlePositionParameters position, Flags flags)
         {
             return CreateParticle(id, position, flags);
         }
@@ -205,7 +236,7 @@ namespace Sim.Particles
         /// <returns>Созданная частица</returns>
         public ParticleBase CreateParticle(int id, double x, double y, Flags flags)
         {
-            Vector2 prepared = new Vector2(x, y);
+            ParticlePositionParameters prepared = new ParticlePositionParameters(x, y);
             ParticleBase particle = (ParticleBase)Activator.CreateInstance(Particles[id], new object[] { Map, prepared, Flags.Empty });
             if (particle != null) particle.InitPosition();
             return particle;

@@ -19,7 +19,7 @@ namespace Sim.Simulation.HeatRender
     internal class RayCasting
     {
 
-        public static bool ShowRays = true;
+        public static bool ShowRays = false;
         public static ulong DeleteRayThreshold = 5;
         public static double MaxDepth = 2000d;
         public static double FOVDelta = Trigonometrics.DegToRad(20d);
@@ -72,6 +72,8 @@ namespace Sim.Simulation.HeatRender
                     }
                     if (searchlist.Count == 1)
                     {
+                        // DISTO or DEPTH?
+                        // DISTO is more accurate because it actually calculates distance and not just usual stepping procedure
                         outList.Add(new KeyValuePair<ParticleBase, (double, double)>(searchlist[0], (DistanceTo(ignore, searchlist[0]), 1d - searchlist[0].Transparency)));
                         return outList;
                     }
@@ -94,7 +96,7 @@ namespace Sim.Simulation.HeatRender
                 // Внешний коэффициент для дополнительных лучей
                 coef = 1d - pred.Transparency;
 
-                outList.Add(new KeyValuePair<ParticleBase, (double, double)>(pred, (depth, coef * externalcoef)));
+                outList.Add(new KeyValuePair<ParticleBase, (double, double)>(pred, (DistanceTo(ignore, pred), coef * externalcoef)));
 
                 // Луч прозрачности
                 if (pred.Transparency != .0d)
@@ -128,8 +130,10 @@ namespace Sim.Simulation.HeatRender
         {
             search.Remove(start);
             Dictionary<ParticleBase, double> outlist = new Dictionary<ParticleBase, double>();
-            foreach(ParticleBase particle in search)
+            ParticleBase particle;
+            for(int i = 0; i < search.Count; i++)
             {
+                particle = search[i];
                 outlist.Add(particle, AngleFromPointToPoint(start.Position.X, start.Position.Y, particle.Position.X, particle.Position.Y));
             }
             return outlist;
@@ -138,8 +142,10 @@ namespace Sim.Simulation.HeatRender
         public static Dictionary<ParticleBase, double> AngleToAll(double x, double y, List<ParticleBase> search)
         {
             Dictionary<ParticleBase, double> outlist = new Dictionary<ParticleBase, double>();
-            foreach(ParticleBase particle in search)
+            ParticleBase particle;
+            for(int i = 0; i < search.Count; i++)
             {
+                particle = search[i];
                 outlist.Add(particle, AngleFromPointToPoint(x, y, particle.Position.X, particle.Position.Y));
             }
             return outlist;
@@ -150,8 +156,10 @@ namespace Sim.Simulation.HeatRender
             List<KeyValuePair<ParticleBase, (double, double)>> outList = new List<KeyValuePair<ParticleBase, (double, double)>>();
             double[] mainCenter = main.CalculateMassCenter();
             List<KeyValuePair<ParticleBase, (double, double)>> predicate;
-            foreach (ParticleBase particle in map.Particles.ToList())
+            ParticleBase particle;
+            for (int i = 0; i < map.Particles.Count; i++)
             {
+                particle = map.Particles[i];
                 if (particle == main)
                 {
                     continue;
@@ -183,9 +191,11 @@ namespace Sim.Simulation.HeatRender
         {
             Dictionary<ParticleBase, double> outList = new Dictionary<ParticleBase, double>();
             double[] mainCenter = main.CalculateMassCenter();
-            foreach (ParticleBase particle in map.Particles)
+            ParticleBase particle;
+            for (int i = 0; i < map.Particles.Count; i++)
             {
-                if (main.Position == particle.Position) continue;
+                particle = map.Particles[i];
+                //if (main.Position == particle.Position) continue;
                 if (particle == main)
                 {
                     continue;
