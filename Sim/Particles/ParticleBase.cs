@@ -122,7 +122,7 @@ namespace Sim.Particles
         /// <summary>
         /// Коэффициент излучения
         /// </summary>
-        public double EmmitingCoeff { get; protected set; }
+        public double EmittingCoeff { get; protected set; }
 
         /// <summary>
         /// Коэффициент поглощения
@@ -187,7 +187,7 @@ namespace Sim.Particles
         public event EventHandler ParticleCollided;
 
 
-        protected ParticleBase(Map.MapBase map, int id, string name, ParticlePositionParameters position, Color color, Flags parameters, Size size, double mass, AggregationStates startState, double startTemperature, double emittingCoeff, double acceptanceCoeff, double heatCapacity, double meltingPoint, double meltingHeat, double evaporationPoint, double evaporationHeat, bool requireRandomTicks)
+        protected ParticleBase(MapBase map, int id, string name, ParticlePositionParameters position, Color color, Flags parameters, Size size, double mass, AggregationStates startState, double startTemperature, double emittingCoeff, double acceptanceCoeff, double transparency, double heatCapacity, double meltingPoint, double meltingHeat, double evaporationPoint, double evaporationHeat, bool requireRandomTicks)
         {
             Uid = LastUid + 1;
             LastUid += 1;
@@ -205,7 +205,7 @@ namespace Sim.Particles
             CurrentState = startState;
             Temperature = startTemperature;
             PreviousTemperature = startTemperature;
-            EmmitingCoeff = emittingCoeff;
+            EmittingCoeff = emittingCoeff;
             AcceptanceCoeff = acceptanceCoeff;
             HeatCapacity = heatCapacity;
             HeatBuffer = 0d;
@@ -218,8 +218,8 @@ namespace Sim.Particles
             CalculateAggregationState(Temperature);
             RequireRandomTick = requireRandomTicks;
             Map.Physics.PhysicParametersChanged += MapPhysicsUpdated;
-            Transparency = 0.1d;
-            //Initialize();
+            Transparency = transparency;
+            CheckSum();
         }
 
         private void MapPhysicsUpdated(object sender, EventArgs e)
@@ -234,6 +234,15 @@ namespace Sim.Particles
         public virtual void Initialize()
         {
             ParticleInitialized?.Invoke(this, EventArgs.Empty);
+        }
+
+        public virtual void CheckSum()
+        {
+            if (Transparency + AcceptanceCoeff > 1)
+            {
+                Logger.Exception(new ParticleException(this, "Checks sum is out of interval [0;+1]"));
+                Environment.Exit(114);
+            }
         }
 
         public virtual void DecayInto(ParticleBase[] particles)
@@ -356,26 +365,48 @@ namespace Sim.Particles
                 return;
             }
 
-            double exp = 0;
+            double exp = 0d;
 
             // Учёт буффера тепла при уменьшении температуры
 
-            if (flux < 0 && HeatBuffer > 0)
+            if (HeatBuffer != 0)
             {
-                if (Math.Abs(flux) > HeatBuffer)
+                if (HeatBuffer > 0 && flux <= 0) 
                 {
-                    exp = (double)((flux - HeatBuffer) / (double)(HeatCapacity * Mass));
-                    HeatBuffer = 0d;
+                    if (Math.Abs(HeatBuffer) >= Math.Abs(flux))
+                    {
+                        double deltabuf = HeatBuffer - flux;
+                        HeatBuffer -= flux;
+                        ChangeTemperatureByHeatFlux(deltabuf);
+                    }
+                    if (Math.Abs(HeatBuffer) <= Math.Abs(flux))
+                    {
+                        double deltabuf = HeatBuffer;
+                        HeatBuffer = 0;
+                        ChangeTemperatureByHeatFlux(deltabuf);
+                    }
                 }
-                else
+                if (HeatBuffer < 0 && flux >= 0)
                 {
-                    HeatBuffer -= flux;
+                    if (Math.Abs(HeatBuffer) >= Math.Abs(flux))
+                    {
+                        double deltabuf = Math.Abs(HeatBuffer) - Math.Abs(flux);
+                        HeatBuffer += flux;
+                        ChangeTemperatureByHeatFlux(deltabuf);
+                    }
+                    if (Math.Abs(HeatBuffer) <= Math.Abs(flux))
+                    {
+                        double deltabuf = HeatBuffer;
+                        HeatBuffer = 0;
+                        ChangeTemperatureByHeatFlux(deltabuf);
+                    }
                 }
             }
-            else
-            {
-                exp = (double)(flux / (double)(HeatCapacity * Mass));
-            }
+
+            exp = (double)(flux / (HeatCapacity * Mass));
+            
+
+            
             IncreaseTemperature(exp);
         }
 
@@ -441,13 +472,58 @@ namespace Sim.Particles
                 return;
             }
 
+            double expheat = 0;
+            double exptemp = temp;
+            AggregationStates expstate = AggregationStates.Solid;
+            if (temp > MeltingPoint && CurrentState == AggregationStates.Solid)
+            {
+                expheat = MeltingHeat * Mass;
+                exptemp = MeltingPoint;
+                expstate = AggregationStates.Liquid;
+            }
+            if (temp > EvaporationPoint && CurrentState == AggregationStates.Liquid)
+            {
+                expheat = EvaporationHeat * Mass;
+                exptemp = EvaporationPoint;
+                expstate = AggregationStates.Gas;
+            }
+            if (temp < EvaporationPoint && CurrentState == AggregationStates.Gas)
+            {
+                HeatBuffer = -EvaporationHeat * Mass;
+                expheat = 0;
+                exptemp = EvaporationPoint;
+                expstate = AggregationStates.Liquid;
+            }
+            if (temp < MeltingPoint && CurrentState == AggregationStates.Liquid)
+            {
+                HeatBuffer = -MeltingHeat * Mass;
+                expheat = 0;
+                exptemp = MeltingPoint;
+                expstate = AggregationStates.Solid;
+            }
+
+            double heatdelta = Math.Abs(Math.Abs(exptemp) - Math.Abs(temp)) * HeatCapacity * Mass;
+            double bufferdelta;
+            HeatBuffer += heatdelta;
+            if (HeatBuffer > expheat)
+            {
+                bufferdelta = HeatBuffer - expheat;
+                HeatBuffer = 0;
+                ChangeAggregationState(expstate);
+                ChangeTemperatureByHeatFlux(bufferdelta);
+                return;
+            }
+
+
+
+            /**
             // Melting
             if (temp > MeltingPoint && CurrentState == AggregationStates.Solid)
             {
-                double heatChange = (double)((double)((double)temp - MeltingPoint) * HeatCapacity);
+                double heatChange = (double)((double)((double)temp - MeltingPoint) * HeatCapacity * Mass);
                 HeatBuffer += heatChange;
                 Temperature = MeltingPoint;
-                double tchange = (double)(HeatBuffer - MeltingHeat);
+                double tchange = (double)(HeatBuffer - MeltingHeat * Mass);
                 if (tchange > 0)
                 {
                     ChangeAggregationState(AggregationStates.Liquid);
@@ -459,10 +535,10 @@ namespace Sim.Particles
             // Evaporation
             if (temp > EvaporationPoint && CurrentState == AggregationStates.Liquid)
             {
-                double heatChange = (double)((double)((double)temp - EvaporationPoint) * HeatCapacity);
+                double heatChange = (double)((double)((double)temp - EvaporationPoint) * HeatCapacity * Mass);
                 HeatBuffer += heatChange;
                 Temperature = EvaporationPoint;
-                double tchange = (double)(HeatBuffer - EvaporationHeat);
+                double tchange = (double)(HeatBuffer - EvaporationHeat * Mass);
                 if (tchange > 0)
                 {
                     ChangeAggregationState(AggregationStates.Gas);
@@ -474,10 +550,10 @@ namespace Sim.Particles
             // Condensation
             if (temp < EvaporationPoint && CurrentState == AggregationStates.Gas)
             {
-                double heatChange = (double)((double)((double)temp - EvaporationPoint) * HeatCapacity);
+                double heatChange = (double)((double)((double)temp - EvaporationPoint) * HeatCapacity * Mass);
                 HeatBuffer += heatChange;
                 Temperature = EvaporationPoint;
-                double tchange = (double)(HeatBuffer + EvaporationHeat);
+                double tchange = (double)(HeatBuffer + EvaporationHeat * Mass);
                 if (tchange < 0)
                 {
                     ChangeAggregationState(AggregationStates.Liquid);
@@ -489,10 +565,10 @@ namespace Sim.Particles
             // Crystalization
             if (temp < MeltingPoint && CurrentState == AggregationStates.Liquid)
             {
-                double heatChange = (double)((double)((double)temp - MeltingPoint) * HeatCapacity);
+                double heatChange = (double)((double)((double)temp - MeltingPoint) * HeatCapacity * Mass);
                 HeatBuffer += heatChange;
                 Temperature = MeltingPoint;
-                double tchange = (double)(HeatBuffer + MeltingHeat);
+                double tchange = (double)(HeatBuffer + MeltingHeat * Mass);
                 if (tchange < 0)
                 {
                     ChangeAggregationState(AggregationStates.Solid);
@@ -500,8 +576,7 @@ namespace Sim.Particles
                     ChangeTemperatureByHeatFlux(tchange);
                 }
             }
-
-
+            **/
         }
 
         public virtual void Remove()
@@ -567,10 +642,11 @@ namespace Sim.Particles
         /// <returns>Требуется ли обновления на следующем кадре</returns>
         protected virtual bool RayCastingTick()
         {
-            if (EmmitingCoeff <= 0d) return false;
-            List<KeyValuePair<ParticleBase, (double, double)>> affected = RayCasting.RayTraceAll(this, Map);
+            double timeMult = 1d;
+            if (EmittingCoeff <= 0d) return false;
+            List<KeyValuePair<ParticleBase, (decimal, double)>> affected = RayCasting.RayTraceAll(this, Map);
             Dictionary<ParticleBase, double> collisions = RayCasting.LazyCollisionRayTrace(this, Map);
-            double transitionCoeff;
+            decimal transitionCoeff;
             double heatFlux;
 
 
@@ -579,17 +655,22 @@ namespace Sim.Particles
                 if (collisions[pt] <= Size.GetDefaultSize().Width)
                 {
                     CollideWith(pt, collisions[pt]);
-                    pt.CollideWith(this, collisions[pt]);
+                    //Idk, this just does not looks right...
+                    //pt.CollideWith(this, collisions[pt]);
                 }
             }
 
-            foreach (KeyValuePair<ParticleBase, (double, double)> kvp in affected)
+            foreach (KeyValuePair<ParticleBase, (decimal, double)> kvp in affected)
             {
                 if (kvp.Key.AcceptanceCoeff <= 0) continue;
-                transitionCoeff = (double)(1 / (double)(Math.PI * (double)((double)kvp.Value.Item1 * (double)kvp.Value.Item1) * halfLenght));
-                heatFlux = kvp.Value.Item2 * (double)((double)EmmitingCoeff * (double)kvp.Key.AcceptanceCoeff * (double)Map.Physics.StefanBoltzmannConst) * (double)transitionCoeff * (double)(Math.Pow(Physic.CelsToKel(Temperature), 4) - (double)Math.Pow(Physic.CelsToKel(kvp.Key.Temperature), 4));
-                ChangeTemperatureByHeatFlux(-heatFlux);
-                kvp.Key.ChangeTemperatureByHeatFlux(heatFlux);
+                transitionCoeff = ((decimal)(1 / (decimal)((decimal)Math.PI * (decimal)((decimal)kvp.Value.Item1 * (decimal)kvp.Value.Item1) * (decimal)halfLenght)));
+                heatFlux = (double)((decimal)kvp.Value.Item2 * (decimal)((decimal)EmittingCoeff * (decimal)kvp.Key.AcceptanceCoeff * (decimal)Map.Physics.StefanBoltzmannConst) * (decimal)transitionCoeff * (decimal)(Math.Pow(Physic.CelsToKel(Temperature), 4) - (double)Math.Pow(Physic.CelsToKel(kvp.Key.Temperature), 4)));
+
+                ChangeTemperatureByHeatFlux(-1 * (double)(heatFlux) * timeMult);
+                kvp.Key.ChangeTemperatureByHeatFlux(heatFlux * timeMult);
+                // I thought this would fix the precision error in ZeroPrecisionDistance
+                //ChangeTemperatureByHeatFlux(-1 * (double)(heatFlux));
+                //kvp.Key.ChangeTemperatureByHeatFlux((double)(heatFlux));
             }
             return UpdateOnNextTick;
         }
@@ -597,7 +678,7 @@ namespace Sim.Particles
         /// <summary>
         /// Столкновение двух частиц
         /// </summary>
-        /// <param name="particle">Вторая столкнившаяся частица</param>
+        /// <param name="particle">Вторая столкнувшаяся частица</param>
         public virtual void CollideWith(ParticleBase particle, double distance)
         {
             Position.CollideWith(particle.Position, distance);

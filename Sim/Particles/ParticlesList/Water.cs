@@ -20,8 +20,9 @@ namespace Sim.Particles.ParticlesList
         public new const double Mass = 18d;
         public new const AggregationStates CurrentState = AggregationStates.Liquid;
         public new const double Temperature = 20d;
-        public new const double EmittingCoeff = 0.2d;
-        public new const double AcceptanceCoeff = 0.15d;
+        public new const double EmittingCoeff = 1d;
+        public new const double AcceptanceCoeff = 0.5d;
+        public new const double Transparency = 0.1d;
         public new const double HeatCapacity = 4200d;
         public new const double MeltingPoint = 0d;
         public new const double MeltingHeat = 83600d;
@@ -44,7 +45,7 @@ namespace Sim.Particles.ParticlesList
             { AggregationStates.Gas, "Steam" },
         };
 
-        public Water(MapBase map, ParticlePositionParameters position, Flags parameters) : base(map, Id, Name, position, Colors.Blue, parameters, Size.GetDefaultSize(), Mass, CurrentState, Temperature, EmittingCoeff, AcceptanceCoeff, HeatCapacity, MeltingPoint, MeltingHeat, EvaporationPoint, EvaporationHeat, RequireRandomTick)
+        public Water(MapBase map, ParticlePositionParameters position, Flags parameters) : base(map, Id, Name, position, Colors.Blue, parameters, Size.GetDefaultSize(), Mass, CurrentState, Temperature, EmittingCoeff, AcceptanceCoeff,  Transparency, HeatCapacity, MeltingPoint, MeltingHeat, EvaporationPoint, EvaporationHeat, RequireRandomTick)
         {
         }
 

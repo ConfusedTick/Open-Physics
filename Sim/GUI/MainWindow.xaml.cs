@@ -64,6 +64,7 @@ namespace Sim.GUI
         private readonly Button _newPageButton;
         private readonly Button _pickUpMapSaveButton;
         private readonly Button _saveMapButton;
+        private readonly Button _enableTemperatureGradient;
 
         private GradientStopCollection TemperatureGradientStops;
 
@@ -86,6 +87,7 @@ namespace Sim.GUI
         private const int NewPageButtonSize = 25;
         private const int PickUpMapSaveButtonSize = 25;
         private const int SaveMapButtonSize = 25;
+        private const int TemperatureGradientCheckBoxSize = 25;
         // Indicates how much px part with a title takes
         private const int TitlePartHeight = 40;
         // Indicates how much px takes part with menu (settings, clear, etc...)
@@ -221,6 +223,20 @@ namespace Sim.GUI
             Canvas.SetLeft(_saveMapButton, 0);
             _ = main_canvas.Children.Add(_saveMapButton);
 
+            // Temperature gradient colors settings ---
+            _enableTemperatureGradient = new Button
+            {
+                Focusable = false,
+                FontFamily = MainFontFamily,
+                Width = TemperatureGradientCheckBoxSize,
+                Height = TemperatureGradientCheckBoxSize,
+                Content = GenerateImageStackPanel(Directory.GetCurrentDirectory() + "/Assets/Buttons/enableTemperatureGradient.png"),
+                
+            };
+            _enableTemperatureGradient.Click += TemperatureGradientCheckboxChanged;
+            Canvas.SetBottom(_enableTemperatureGradient, 0 + OpenSettingsButtonSize + NewPageButtonSize + PickUpMapSaveButtonSize + SaveMapButtonSize);
+            Canvas.SetLeft(_enableTemperatureGradient, 0);
+            _ = main_canvas.Children.Add(_enableTemperatureGradient);
 
             // Setting up events
             KeyDown += Window_KeyDown;
@@ -241,6 +257,15 @@ namespace Sim.GUI
             Logger.Log("Window ready", "MainWindow", '!', ConsoleColor.Green);
             StartInfoUpdater();
             UpdateGlobalInfo();
+        }
+
+        private void TemperatureGradientCheckboxChanged(object sender, RoutedEventArgs e)
+        {
+            HeatDisplay = !HeatDisplay;
+            foreach (ParticleBase part in Map.Particles)
+            {
+                UpdateParticle(part);
+            }
         }
 
         private void SaveMapButtonClick(object sender, RoutedEventArgs e)
@@ -373,18 +398,22 @@ namespace Sim.GUI
 
             ParticlePositionParameters Position = part.Position;
 
-            UpdateHeatColor(part);
+
+            if (HeatDisplay) UpdateHeatColor(part);
+            else ParticlesRectangles[part.Uid].Fill = new SolidColorBrush(part.Color);
+
             if (Math.Round(Position.PreviousX, Map.Physics.Smoothness) == Math.Round(Position.X, Map.Physics.Smoothness) && Math.Round(Position.PreviousY, Map.Physics.Smoothness) == Math.Round(Position.Y, Map.Physics.Smoothness) && part.PreviousState == part.CurrentState)
             {
                 return;
             }
 
             Rectangle rectangle = ParticlesRectangles[part.Uid];
+
+
             if (rectangle == null)
             {
                 return;
             }
-            //rectangle.Fill = new SolidColorBrush(part.Color);
 
             _ = rectangle.Dispatcher.BeginInvoke(() => Canvas.SetLeft(rectangle, Math.Round(Position.X * SizeMult + 3 * Size, Map.Physics.Smoothness, MidpointRounding.ToEven)));
             _ = rectangle.Dispatcher.BeginInvoke(() => Canvas.SetBottom(rectangle, Math.Round(Position.Y * SizeMult, Map.Physics.Smoothness, MidpointRounding.ToEven)));
@@ -523,10 +552,12 @@ namespace Sim.GUI
 
         public void Dot(double x, double y)
         {
-            Rectangle dot = new Rectangle();
-            dot.Height = .9d;
-            dot.Width = .9d;
-            dot.Fill = new SolidColorBrush(Colors.White);
+            Rectangle dot = new Rectangle
+            {
+                Height = .9d,
+                Width = .9d,
+                Fill = new SolidColorBrush(Colors.White)
+            };
             Canvas.SetLeft(dot, MapXToWindowX(x));
             Canvas.SetBottom(dot, MapYToWindowY(y));
             main_canvas.Children.Add(dot);
@@ -666,7 +697,6 @@ namespace Sim.GUI
 
         public void UpdateGlobalInfo()
         {
-            Map.Particles.ForEach(part => UpdateHeatColor(part));
             foreach(Rectangle rect in Dots)
             {
                 main_canvas.Children.Remove(rect);
@@ -694,6 +724,7 @@ namespace Sim.GUI
                 + "\nMiT=" + Map.Physics.MinTemperature
                 + "\nMaT=" + Map.Physics.MaxTemperature
                 + "\nParC=" + Map.Particles.Count
+                + "\nIntC=" + Map.Instruments.Count
                 + "\nPerf=" + Math.Round(Map.Performance * 100) + "%";
         }
 
@@ -726,8 +757,9 @@ namespace Sim.GUI
                     "\nSize=" + particle.Size +
                     "\nSpeed=" + Math.Round(particle.Position.Speed, Map.Physics.Smoothness) + " M/T" +
                     "\nTemp=" + Math.Round(particle.Temperature, Map.Physics.Smoothness) + " C" +
-                    "\nEmittingCoeff=" + Math.Round(particle.EmmitingCoeff, Map.Physics.Smoothness) +
+                    "\nEmittingCoeff=" + Math.Round(particle.EmittingCoeff, Map.Physics.Smoothness) +
                     "\nAcceptanceCoeff=" + Math.Round(particle.AcceptanceCoeff, Map.Physics.Smoothness) +
+                    "\nTransparency=" + Math.Round(particle.Transparency, Map.Physics.Smoothness) +
                     "\nHeatCapacity=" + Math.Round(particle.HeatCapacity, Map.Physics.Smoothness) + " J/KG * C" +
                     "\nHalfLenght=" + Math.Round(particle.halfLenght, Map.Physics.Smoothness) + " M" +
                     "\nAccel=" + Math.Round(particle.Position.Acceleration, Map.Physics.Smoothness) + " M/T2" +

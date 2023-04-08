@@ -22,6 +22,7 @@ namespace Sim.Particles
         public new const double Temperature = 20d;
         public new const double EmittingCoeff = 0.001d;
         public new const double AcceptanceCoeff = 0.001d;
+        public new const double Transparency = 0d;
         public new const double HeatCapacity = 15d;
         public new const double MeltingPoint = -259d;
         public new const double MeltingHeat = 1d;
@@ -44,7 +45,7 @@ namespace Sim.Particles
             { AggregationStates.Gas, "Hydrogen" },
         };
 
-        public Hydrogen(MapBase map, ParticlePositionParameters position, Flags parameters) : base(map, Id, Name, position, Colors.Blue, parameters, Size.GetDefaultSize(), Mass, CurrentState, Temperature, EmittingCoeff, AcceptanceCoeff, HeatCapacity, MeltingPoint, MeltingHeat, EvaporationPoint, EvaporationHeat, RequireRandomTick)
+        public Hydrogen(MapBase map, ParticlePositionParameters position, Flags parameters) : base(map, Id, Name, position, Colors.Blue, parameters, Size.GetDefaultSize(), Mass, CurrentState, Temperature, EmittingCoeff, AcceptanceCoeff,  Transparency, HeatCapacity, MeltingPoint, MeltingHeat, EvaporationPoint, EvaporationHeat, RequireRandomTick)
         {
         }
 

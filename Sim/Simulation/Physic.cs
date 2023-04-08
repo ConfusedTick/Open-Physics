@@ -24,7 +24,7 @@ namespace Sim.Simulation
 
         public double StefanBoltzmannConst = 5.670374419d * (double)Math.Pow(10, -8);
 
-        public double CasterDepthStep = 0.9d;
+        public double CasterDepthStep = 0.6d;
 
         public double MinTemperature = -273.25d;
 

@@ -5,6 +5,7 @@ using System.Linq;
 using Sim.GlmMath;
 using Sim.Particles;
 using Sim.Map;
+using Sim.Simulation.HeatRender;
 using SFML.System;
 using Sim.Utils;
 
@@ -128,28 +129,31 @@ namespace Sim.Simulation
             NetForce = 0d;
             if (Fixed) return false;
             UpdateOnNextTick = false;
-
-            foreach (Force pf in PermanentForces.ToList())
+            Force pf, tf, df;
+            for(int pfc = 0; pfc < PermanentForces.Count; pfc++)
             {
+                pf = PermanentForces[pfc];
                 TickForce(pf);
                 AddForceToDirection(pf.Angle, pf.NetForce);
             }
 
-            foreach (Force tf in TemporaryForces.ToList())
+            for (int tfc = 0; tfc < TemporaryForces.Count; tfc++)
             {
+                tf = TemporaryForces[tfc];
                 TickForce(tf);
                 AddForceToDirection(tf.Angle, tf.NetForce);
             }
 
-            foreach (Force df in OneTickForces.ToList())
+            for (int dfc = 0; dfc < OneTickForces.Count; dfc++)
             {
+                df = OneTickForces[dfc];
                 TickForce(df);
                 AddForceToDirection(df.Angle, df.NetForce);
-                OneTickForces.Remove(df);
             }
 
             SetAcceleration(NetForce / Particle.Mass);
             IncreaseSpeed(Acceleration * Particle.Map.Physics.DeltaTime);
+            OneTickForces.Clear();
             
             bool saved = ForceUpdateOnNextTick;
             ForceUpdateOnNextTick = false;
@@ -367,6 +371,14 @@ namespace Sim.Simulation
         {
             TemporaryForces.Clear();
             PermanentForces.ForEach(f => f.Reset());
+            OneTickForces.Clear();
+        }
+
+        public void Stop()
+        {
+            CompensateForces();
+            Speed = 0d;
+            Acceleration = 0d;
         }
 
         public double[] GetPosition()
@@ -381,29 +393,27 @@ namespace Sim.Simulation
 
         public void CollideWith(ParticlePositionParameters vector, double distance)
         {
+            return;
+            //Logger.Log("collision");
+            double forceOut = .1d;
 
-            Logger.Log("Collision");
-            double responseCoeff = 2d;
+            double sumMass = Particle.Mass + vector.Particle.Mass;
 
-            Vector2f v = ToVector2() - vector.ToVector2();
-            Vector2f n = v / (float)distance;
+            double ratio1 = Particle.Mass / sumMass;
+            double ratio2 = vector.Particle.Mass / sumMass;
 
-            double massSum = Particle.Mass + vector.Particle.Mass;
-            double ratio1 = Particle.Mass / massSum;
-            double ratio2 = vector.Particle.Mass / massSum;
-            double delta = .5f * responseCoeff * Math.Abs(distance - Size.GetDefaultSize().Width);
+            double angleToSecond = Trigonometrics.RadToDeg(RayCasting.AngleFromPointToPoint(X, Y, vector.X, vector.Y));
+            double angleToFirst = 180d + angleToSecond;
 
-            Vector2f add1 = n * (float)((float)ratio2 * (float)delta);
-            Vector2f add2 = n * (float)((float)ratio1 * (float)delta);
+            double deltaDistance = (double)RayCasting.ZeroDistancePrecision + Math.Abs(distance - Size.GetDefaultSize().Width);
+            if ((distance - Size.GetDefaultSize().Width) > 0) deltaDistance = 1d;
+            double penetrationCoeff = 90000d * Math.Pow(deltaDistance, 1);
 
-            X += add1.X;
-            Y += add1.Y;
-            vector.X += add2.X;
-            vector.Y += add2.Y;
-            Logger.Log(ratio1.ToString());
-            Logger.Log(ratio2.ToString());
+            Stop();
+            vector.Stop();
 
-
+            vector.OneTickForces.Add(new Force((int)angleToSecond, forceOut * penetrationCoeff * ratio1, vector));;
+            OneTickForces.Add(new Force((int)angleToFirst, forceOut * penetrationCoeff * ratio2, this));
         }
 
         public static bool operator ==(ParticlePositionParameters left, ParticlePositionParameters right)

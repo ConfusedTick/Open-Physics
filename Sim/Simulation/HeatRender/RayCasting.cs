@@ -9,14 +9,13 @@ using Sim.Particles;
 namespace Sim.Simulation.HeatRender
 {
 
-    /// <summary>
-    /// Отвечает за рендер тепла, возвращает словарь, который в качестве ключа содержит частицу с карты (не основную)
-    /// а в качестве значения число, отображающее расстояние от этой частицы до основной. В случае RayTracingа и RayCastinga
-    /// проводятся лучи, соответсвенно блоки, находящиеся за другими блоками, до которых не достанет луч, не будут учитываться возвращаемом словаре
-    /// </summary>
 
     // НЕ ЛЕЗЬ
-    internal class RayCasting
+    /// <summary>
+    /// Тут прописана вся техника лучей. Отражения, прозрачность. Лучше не трогать, т.к всё плотно взаимосвязано.
+    /// Параметры лучше не менять, если не знаешь что делаешь. Лучше просто меняй Physics.CasterDepthStep для повышения точности
+    /// </summary>
+    internal static class RayCasting
     {
 
         public static bool ShowRays = false;
@@ -24,19 +23,21 @@ namespace Sim.Simulation.HeatRender
         public static double MaxDepth = 2000d;
         public static double FOVDelta = Trigonometrics.DegToRad(20d);
 
-        public static double FirstAnglesCheck = 1.5d * Size.GetDefaultSize().Width;
-        public static double SecondAnglesCheck = MaxDepth;
+        public static double FirstAnglesCheck = 3.5d;
+        public static double SecondAnglesCheck = MaxDepth; // Not used. maybe first one is enough.
 
-        public static List<KeyValuePair<ParticleBase, (double, double)>> TraceRay(MapBase map, MapPoint startpos, MapPoint endpos, List<ParticleBase> searchlist, ulong recurtion = 0, double externalcoef = 1)
+        public static decimal ZeroDistancePrecision = .2m; // Can become unsafed (and cause erros) after changing default size.
+
+        public static List<KeyValuePair<ParticleBase, (decimal, double)>> TraceRay(MapBase map, MapPoint startpos, MapPoint endpos, List<ParticleBase> searchlist, ulong recurtion = 0, double externalcoef = 1)
         {
-            List<KeyValuePair<ParticleBase, (double, double)>> outList = new List<KeyValuePair<ParticleBase, (double, double)>>();
+            List<KeyValuePair<ParticleBase, (decimal, double)>> outList = new List<KeyValuePair<ParticleBase, (decimal, double)>>();
             if (recurtion >= DeleteRayThreshold) return outList;
             double angle = Math.Atan2((double)(endpos.Y - startpos.Y), (double)(endpos.X - startpos.X));
 
             double sin = Math.Sin(angle);
             double cos = Math.Cos(angle);
 
-            List<KeyValuePair<ParticleBase, (double, double)>> pred2;
+            List<KeyValuePair<ParticleBase, (decimal, double)>> pred2;
 
             ParticleBase ignore = map.IsInParticleArea(startpos.X, startpos.Y);
 
@@ -72,14 +73,12 @@ namespace Sim.Simulation.HeatRender
                     }
                     if (searchlist.Count == 1)
                     {
-                        // DISTO or DEPTH?
-                        // DISTO is more accurate because it actually calculates distance and not just usual stepping procedure
-                        outList.Add(new KeyValuePair<ParticleBase, (double, double)>(searchlist[0], (DistanceTo(ignore, searchlist[0]), 1d - searchlist[0].Transparency)));
+                        outList.Add(new KeyValuePair<ParticleBase, (decimal, double)>(searchlist[0], (DistanceTo(ignore, searchlist[0]), 1d - searchlist[0].Transparency)));
+                        searchlist.Remove(searchlist[0]);
                         return outList;
                     }
                 }
 
-                double coef;
                 if (ShowRays) App.MainWindow.Dot(x, y);
                 if (!map.IsAllowedPosition(x, y))
                 {
@@ -93,10 +92,8 @@ namespace Sim.Simulation.HeatRender
                     continue;
                 }
 
-                // Внешний коэффициент для дополнительных лучей
-                coef = 1d - pred.Transparency;
-
-                outList.Add(new KeyValuePair<ParticleBase, (double, double)>(pred, (DistanceTo(ignore, pred), coef * externalcoef)));
+                outList.Add(new KeyValuePair<ParticleBase, (decimal, double)>(pred, (DistanceTo(ignore, pred), pred.AcceptanceCoeff * externalcoef)));
+                searchlist.Remove(searchlist[0]);
 
                 // Луч прозрачности
                 if (pred.Transparency != .0d)
@@ -151,11 +148,11 @@ namespace Sim.Simulation.HeatRender
             return outlist;
         }
 
-        public static List<KeyValuePair<ParticleBase, (double, double)>> RayTraceAll(ParticleBase main, MapBase map)
+        public static List<KeyValuePair<ParticleBase, (decimal, double)>> RayTraceAll(ParticleBase main, MapBase map)
         {
-            List<KeyValuePair<ParticleBase, (double, double)>> outList = new List<KeyValuePair<ParticleBase, (double, double)>>();
+            List<KeyValuePair<ParticleBase, (decimal, double)>> outList = new List<KeyValuePair<ParticleBase, (decimal, double)>>();
             double[] mainCenter = main.CalculateMassCenter();
-            List<KeyValuePair<ParticleBase, (double, double)>> predicate;
+            List<KeyValuePair<ParticleBase, (decimal, double)>> predicate;
             ParticleBase particle;
             for (int i = 0; i < map.Particles.Count; i++)
             {
@@ -167,7 +164,7 @@ namespace Sim.Simulation.HeatRender
 
                 double[] particleCenter = particle.CalculateMassCenter();
 
-                predicate = TraceRay(map, new MapPoint(mainCenter[0], mainCenter[1]), new MapPoint(particleCenter[0], particleCenter[1]), map.Particles.ToList(), 0, main.EmmitingCoeff);
+                predicate = TraceRay(map, new MapPoint(mainCenter[0], mainCenter[1]), new MapPoint(particleCenter[0], particleCenter[1]), map.Particles.ToList(), 0, main.EmittingCoeff);
                 if (predicate.Count <= 0)
                 {
                     continue;
@@ -178,13 +175,16 @@ namespace Sim.Simulation.HeatRender
             return outList;
         }
 
-        public static double DistanceTo(ParticleBase start, ParticleBase end)
+        public static decimal DistanceTo(ParticleBase start, ParticleBase end)
         {
             double[] startCenter = start.CalculateMassCenter();
             double[] endCenter = end.CalculateMassCenter();
             double deltax = endCenter[0] - startCenter[0];
             double deltay = endCenter[1] - startCenter[1];
-            return Math.Sqrt((deltax * deltax) + (deltay * deltay));
+            decimal dist = (decimal)Math.Sqrt((deltax * deltax) + (deltay * deltay)) - (decimal)Size.GetDefaultSize().Width;
+            // if dist will be zero, the division by zero exception will be called
+            if (dist <= ZeroDistancePrecision) return ZeroDistancePrecision;
+            else return dist;
         }
 
         public static Dictionary<ParticleBase, double> LazyCollisionRayTrace(ParticleBase main, MapBase map)
@@ -202,6 +202,8 @@ namespace Sim.Simulation.HeatRender
                 }
                 if (!outList.ContainsKey(particle))
                 {
+                    // Calculates distance to mass centers, not to an edge
+                    // So DistanceTo(start, end) will be useless
                     double[] particleCenter = particle.CalculateMassCenter();
                     double dif0 = particleCenter[0] - mainCenter[0];
                     double dif1 = particleCenter[1] - mainCenter[1];

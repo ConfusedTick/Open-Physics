@@ -18,6 +18,7 @@
     <None Remove="Assets\Buttons\openSettings.png" />
     <None Remove="Assets\Buttons\pickUpMapSave.png" />
     <None Remove="Assets\Buttons\saveMap.png" />
+	<None Remove="Assets\Buttons\enableTemperatureGradient.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -33,6 +34,9 @@
     <Content Include="Assets\Buttons\saveMap.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+	<Content Include="Assets\Buttons\enableTemperatureGradient.png">
+	  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	</Content>
   </ItemGroup>
 
   <ItemGroup>

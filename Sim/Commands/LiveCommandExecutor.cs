@@ -239,6 +239,11 @@ namespace Sim.Commands
                     }
                     break;
 
+                case "add":
+                    ParticleFactory.GetFactory(Map).AddNewInstrument(Convert.ToInt32(cmd.Arguments[0]), Map.IsInParticleArea((double)Convert.ToInt32(cmd.Arguments[1]), (double)Convert.ToInt32(cmd.Arguments[2])), Flags.Empty, Convert.ToInt32(cmd.Arguments[3]));
+
+                    break;
+
                 default:
                     Logger.Log("Command " + cmd.CommandName + " is not found.", "LCE", textColor: ConsoleColor.DarkRed);
                     return;
