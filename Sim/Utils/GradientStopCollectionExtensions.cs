@@ -10,13 +10,13 @@ namespace Sim.Utils
     {
         public static Color GetRelativeColor(this GradientStopCollection gsc, double offset)
         {
-            var point = gsc.SingleOrDefault(f => f.Offset == offset);
+            GradientStop point = gsc.SingleOrDefault(f => f.Offset == offset);
             if (point != null) return point.Color;
 
             GradientStop before = gsc.Where(w => w.Offset == gsc.Min(m => m.Offset)).First();
             GradientStop after = gsc.Where(w => w.Offset == gsc.Max(m => m.Offset)).First();
 
-            foreach (var gs in gsc)
+            foreach (GradientStop gs in gsc)
             {
                 if (gs.Offset < offset && gs.Offset > before.Offset)
                 {
@@ -28,7 +28,7 @@ namespace Sim.Utils
                 }
             }
 
-            var color = new Color
+            Color color = new Color
             {
                 ScA = (float)((offset - before.Offset) * (after.Color.ScA - before.Color.ScA) / (after.Offset - before.Offset) + before.Color.ScA),
                 ScR = (float)((offset - before.Offset) * (after.Color.ScR - before.Color.ScR) / (after.Offset - before.Offset) + before.Color.ScR),

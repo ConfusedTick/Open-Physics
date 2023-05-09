@@ -773,7 +773,6 @@ namespace Sim.GUI
                     "\nRandomTicksRarity=" + particle.RandomTickRarity + 
                     "\nLifeTick=" + particle.LifeTick + 
                     "\nFixed=" + particle.Fixed;
-
         }
 
         private void MouseHoverOn(object sender, EventArgs e)

@@ -22,7 +22,7 @@ namespace Sim.Particles.ParticlesList
         public new const double Temperature = 20d;
         public new const double EmittingCoeff = 1d;
         public new const double AcceptanceCoeff = 0.5d;
-        public new const double Transparency = 0.1d;
+        public new const double Transparency = 0.0d;
         public new const double HeatCapacity = 4200d;
         public new const double MeltingPoint = 0d;
         public new const double MeltingHeat = 83600d;

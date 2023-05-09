@@ -21,7 +21,7 @@ namespace Sim.Simulation.HeatRender
         public static bool ShowRays = false;
         public static ulong DeleteRayThreshold = 5;
         public static double MaxDepth = 2000d;
-        public static double FOVDelta = Trigonometrics.DegToRad(20d);
+        public static double FOVDelta = 0.5d;
 
         public static double FirstAnglesCheck = 3.5d;
         public static double SecondAnglesCheck = MaxDepth; // Not used. maybe first one is enough.
@@ -61,7 +61,7 @@ namespace Sim.Simulation.HeatRender
                 {
                     foreach (ParticleBase bs in angles.Keys)
                     {
-                        if (Math.Abs(angles[bs] - angle) > FOVDelta)
+                        if (Trigonometrics.CosOfAngleBetween(angles[bs], angle) > FOVDelta)
                         {
                             searchlist.Remove(bs);
                         }
@@ -183,8 +183,7 @@ namespace Sim.Simulation.HeatRender
             double deltay = endCenter[1] - startCenter[1];
             decimal dist = (decimal)Math.Sqrt((deltax * deltax) + (deltay * deltay)) - (decimal)Size.GetDefaultSize().Width;
             // if dist will be zero, the division by zero exception will be called
-            if (dist <= ZeroDistancePrecision) return ZeroDistancePrecision;
-            else return dist;
+            return dist <= ZeroDistancePrecision ? ZeroDistancePrecision : dist;
         }
 
         public static Dictionary<ParticleBase, double> LazyCollisionRayTrace(ParticleBase main, MapBase map)

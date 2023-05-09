@@ -55,5 +55,18 @@ namespace Sim.GlmMath
         {
             return RadToDeg(Math.Acos(DCos(angle)));
         }
+
+        public static double DCosOfAngleBetween(int a, int b)
+        {
+            double s = DCos(a) + DCos(b);
+            return Math.Abs(s);
+        }
+
+        public static double CosOfAngleBetween(double a, double b)
+        {
+            double s = Math.Cos(a) - Math.Cos(b);
+            return Math.Abs(s);
+        }
+
     }
 }

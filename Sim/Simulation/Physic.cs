@@ -53,7 +53,7 @@ namespace Sim.Simulation
             string[] args;
             foreach (string str in strs)
             {
-                if (str.StartsWith("#"))
+                if (str.StartsWith("#") || str.StartsWith("//"))
                 {
                     continue;
                 }
