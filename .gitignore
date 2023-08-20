@@ -1,5 +1,7 @@
 .vs/
 bin/
 obj/
-clean.bat
-backup.bat
+Sim/clean.bat
+Sim/backup.bat
+Sim vold/clean.bat
+Sim vold/backup.bat
