@@ -3,5 +3,5 @@ bin/
 obj/
 Sim/clean.bat
 Sim/backup.bat
-Sim vold/clean.bat
-Sim vold/backup.bat
+Sim/Sim.csproj
+Sim/Sim.csproj.user
